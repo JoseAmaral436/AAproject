@@ -75,6 +75,7 @@ Node * tfind(char *s){
     while(1){
       if((strcmp(aux->string, s)) < 0){
 	if(aux->left == NULL){
+	  printf("NULL\n");
 	  return NULL;
 	}
 	else{
@@ -83,6 +84,7 @@ Node * tfind(char *s){
       }
       else if((strcmp(aux->string, s)) > 0){
 	if(aux->right == NULL){
+	  printf("NULL\n");
 	  return NULL;
 	}
 	else{
@@ -97,36 +99,77 @@ Node * tfind(char *s){
   }
 }
 
-/*void tdelete(char *s){
+Node * tdelete(char *s){ //TODO IF REMOVE ROOT
   if (root == NULL){
     return NULL;
   }
   else{
-    Node *aux = root;
+    Node *parent = NULL;
+    Node *curr = root;
+    int parentage = -1; //0 if left, 1 if right
     while(1){
-      if((strcmp(aux->string, s)) < 0){
-	if(aux->left == NULL){
+      if((strcmp(curr->string, s)) < 0){
+	if(curr->left == NULL){
+	  printf("NULL\n");
 	  return NULL;
 	}
 	else{
-	  aux = aux->left;
+	  parent = curr;
+	  curr = curr->left;
+	  parentage = 0;
 	}
       }
-      else if((strcmp(aux->string, s)) > 0){
-	if(aux->right == NULL){
+      else if((strcmp(curr->string, s)) > 0){
+	if(curr->right == NULL){
+	  printf("NULL\n");
 	  return NULL;
 	}
 	else{
-	  aux = aux->right;
+	  parent = curr;
+	  curr = curr->right;
+	  parentage = 1;
 	}
       }
       else{
-	printf("%d\n",aux->numOfOcc);
-	return aux;
+	printf("%d\n",curr->numOfOcc);
+	if ((curr->left == NULL) && (curr->right == NULL)){ // no CHILD
+	  free(curr->string);
+	  free(curr);
+	  if (parentage == 0){
+	    parent->left = NULL;
+	  }
+	  else if (parentage == 1){
+	    parent->right = NULL;
+	  }
+	}
+	else if ((!(curr->left == NULL)) != (!(curr->right == NULL))){ //XOR , only one child
+	  free(curr->string);
+	  free(curr);
+	  if (parentage == 0){
+	    if (curr->left == NULL){
+	      parent->left = curr->right;
+	    }
+	    else{
+	      parent->left = curr->left;
+	    }
+	  }
+	  else if (parentage == 1){
+	    if (curr->left == NULL){
+	      parent->right = curr->right;
+	    }
+	    else{
+	      parent->right = curr->left;
+	    }
+	  }
+	}
+	else{ // TODO 2 CHILDREN
+	  
+	}
+	return parent; // RETURN PARENT of deleted node
       }
     }
   }
-}*/
+}
 
 int main(){
   int numOfLines;
@@ -159,8 +202,7 @@ int main(){
       case 'D':
 	memmove(line, line+1, strlen(line));
 	memmove(line, line+1, strlen(line));
-	printf("D aind n feito\n");
-	//tdelete(line);
+	tdelete(line);
 	break;
     }
   }
