@@ -108,7 +108,7 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
   }
 }
 
-/*Node * tdelete(char *s){ //TODO IF REMOVE ROOT
+/*void * tdelete(char *s){ //TODO IF REMOVE ROOT
   if (root == NULL){
     return NULL;
   }
@@ -198,7 +198,12 @@ int main(){
   for(i = 1; i <= numOfLines; i++){
     getline(&line, &sizeOfLine, stdin);
     int lineSize = strlen(line);
-    line[lineSize - 1] = '\0'; //TODO ASK IF ALL STRINGS HAVE SAME LENGTH
+    if (i != numOfLines){
+      line[lineSize - 1] = '\0'; //all strings have '\n' in the end beside the last
+    }
+    else{
+      line[lineSize] = '\0'; // last string doesnt have '\n'
+    }
     void * result;
     switch(line[0]){
       case 'A':
@@ -211,21 +216,29 @@ int main(){
 	((Info *)((Node *) result)->value)->numOfOcc += 1;
 	printf("%d\n", ((Info *)((Node *) result)->value)->numOfOcc);
 	break;
-      /*case 'F':
+      case 'F':
 	memmove(line, line+1, strlen(line)); //TODO TEST MEMORY LEAK
 	memmove(line, line+1, strlen(line));
-	result = tfind(info, &root, compar);
+	Info * find = malloc(sizeof(Info)); //this makes no
+	find->string = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to find
+	strcpy(find->string, line); //How should we do it ???
+	result = tfind(find, &root, compar);
 	if (result == NULL){
 	  printf("NULL\n");
 	}
 	else{
 	  printf("%d\n", ((Info *)((Node *) result)->value)->numOfOcc);
 	}
+	free(find->string);
+	free(find);
 	break;
-      case 'D':
+      /*case 'D':
 	memmove(line, line+1, strlen(line));
 	memmove(line, line+1, strlen(line));
-	tdelete(line);
+	Info * delete = malloc(sizeof(Info)); //this makes no
+	delete->string = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to delete
+	strcpy(delete->string, line); //How should we do it ???
+	result = tdelete(delete, &root, compar);
 	break;*/
     }
   }
