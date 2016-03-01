@@ -1,2 +1,0 @@
-# AAproject
-Advanced Algorithms' project
