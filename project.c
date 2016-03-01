@@ -64,96 +64,110 @@ void *tsearch(const void *key, void **rootp,
 	}
 }
 
-/*Node * tfind(char *s) {
- if (root == NULL) {
- return NULL;
- } else {
- Node *aux = root;
- while (1) {
- if ((strcmp(aux->value, s)) < 0) {
- if (aux->left == NULL) {
- printf("NULL\n");
- return NULL;
- } else {
- aux = aux->left;
- }
- } else if ((strcmp(aux->value, s)) > 0) {
- if (aux->right == NULL) {
- printf("NULL\n");
- return NULL;
- } else {
- aux = aux->right;
- }
- } else {
- printf("%d\n", aux->numOfOcc);
- return aux;
- }
- }
- }
- }
+void * tfind(const void *key, void **rootp, int (*compar)(const void *, const void *)){
+  if (*rootp == NULL){
+    return NULL;
+  }
+  else{
+    Node *aux = *rootp;
+    int compare;
+    while(1){
+      compare = (compar(aux->value, key));
+      if(compare < 0){
+	if(aux->left == NULL){
+	  return NULL;
+	}
+	else{
+	  aux = aux->left;
+	}
+      }
+      else if(compare > 0){
+	if(aux->right == NULL){
+	  return NULL;
+	}
+	else{
+	  aux = aux->right;
+	}
+      }
+      else{
+	return aux;
+      }
+    }
+  }
+}
 
- Node * tdelete(char *s) { //TODO IF REMOVE ROOT
- if (root == NULL) {
- return NULL;
- } else {
- Node *parent = NULL;
- Node *curr = root;
- int parentage = -1; //0 if left, 1 if right
- while (1) {
- if ((strcmp(curr->value, s)) < 0) {
- if (curr->left == NULL) {
- printf("NULL\n");
- return NULL;
- } else {
- parent = curr;
- curr = curr->left;
- parentage = 0;
- }
- } else if ((strcmp(curr->value, s)) > 0) {
- if (curr->right == NULL) {
- printf("NULL\n");
- return NULL;
- } else {
- parent = curr;
- curr = curr->right;
- parentage = 1;
- }
- } else {
- printf("%d\n", curr->numOfOcc);
- if ((curr->left == NULL) && (curr->right == NULL)) { // no CHILD
- free(curr->value);
- free(curr);
- if (parentage == 0) {
- parent->left = NULL;
- } else if (parentage == 1) {
- parent->right = NULL;
- }
- } else if ((!(curr->left == NULL))
- != (!(curr->right == NULL))) { //XOR , only one child
- free(curr->value);
- free(curr);
- if (parentage == 0) {
- if (curr->left == NULL) {
- parent->left = curr->right;
- } else {
- parent->left = curr->left;
- }
- } else if (parentage == 1) {
- if (curr->left == NULL) {
- parent->right = curr->right;
- } else {
- parent->right = curr->left;
- }
- }
- } else { // TODO 2 CHILDREN
+void * tdelete(const void *key, void **rootp, int (*compar)(const void *, const void *)){ //TODO IF REMOVE ROOT
+  if (*rootp == NULL){
+    return NULL;
+  }
+  else{
+    Node *parent = NULL;
+    Node *curr = *rootp;
+    int parentage = -1; //0 if left, 1 if right
+    int compare;
+    while(1){
+      compare = (compar(curr->value, key));
+      if(compare < 0){
+	if(curr->left == NULL){
+	  printf("NULL\n");
+	  return NULL;
+	}
+	else{
+	  parent = curr;
+	  curr = curr->left;
+	  parentage = 0;
+	}
+      }
+      else if(compare > 0){
+	if(curr->right == NULL){
+	  printf("NULL\n");
+	  return NULL;
+	}
+	else{
+	  parent = curr;
+	  curr = curr->right;
+	  parentage = 1;
+	}
+      }
+      else{
+	if ((curr->left == NULL) && (curr->right == NULL)){ // no CHILD
+	  free((void *) curr->value);
+	  free(curr);
+	  if (parentage == 0){
+	    parent->left = NULL;
+	  }
+	  else if (parentage == 1){
+	    parent->right = NULL;
+	  }
+	}
+	else if ((!(curr->left == NULL)) != (!(curr->right == NULL))){ //XOR , only one child
+	  free((void *) curr->value);
+	  free(curr);
+	  if (parentage == 0){
+	    if (curr->left == NULL){
+	      parent->left = curr->right;
+	    }
+	    else{
+	      parent->left = curr->left;
+	    }
+	  }
+	  else if (parentage == 1){
+	    if (curr->left == NULL){
+	      parent->right = curr->right;
+	    }
+	    else{
+	      parent->right = curr->left;
+	    }
+	  }
+	}
+	else{ // TODO 2 CHILDREN
 
- }
- return parent; // RETURN PARENT of deleted node
- }
- }
- }
- }
- */
+	}
+	return parent; // RETURN PARENT of deleted node
+      }
+    }
+  }
+}
 int main() {
 	root = NULL;
 	int numOfLines = 0;
@@ -170,7 +184,12 @@ int main() {
 	size_t sizeOfLine;
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
-		line[strlen(line) - 1] = '\0'; //TODO ASK IF ALL STRINGS HAVE SAME LENGTH
+		int lineSize = strlen(line);
+		if (i != numOfLines) {
+			line[lineSize - 1] = '\0'; //all strings have '\n' in the end beside the last
+		} else {
+			line[lineSize] = '\0'; // last string doesnt have '\n'
+		}
 		switch (line[0]) {
 		case 'A':
 			line = line + 2; //TODO TEST MEMORY LEAK
@@ -178,16 +197,39 @@ int main() {
 			info->label = malloc(sizeof(line));
 			strcpy(info->label, line);
 			Node *result = tsearch(info, &root, compar);
-			((Info*)(result->value))->numOfOcc++;
-			printf("%d\n", ((Info*)(result->value))->numOfOcc);
+			((Info*) (result->value))->numOfOcc++;
+			printf("%d\n", ((Info*) (result->value))->numOfOcc);
 			break;
 		case 'F':
-			line = line + 2; //TODO TEST MEMORY LEAK
-			//tfind(line);
+			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
+			memmove(line, line + 1, strlen(line));
+			Info * find = malloc(sizeof(Info)); //this makes no
+			find->label = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to find
+			strcpy(find->label, line); //How should we do it ???
+			result = tfind(find, &root, compar);
+			if (result == NULL) {
+				printf("NULL\n");
+			} else {
+				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
+			}
+			free(find->label);
+			free(find);
 			break;
 		case 'D':
-			line = line + 2; //TODO TEST MEMORY LEAK
-			//tdelete(line);
+			memmove(line, line + 1, strlen(line));
+			memmove(line, line + 1, strlen(line));
+			Info * delete = malloc(sizeof(Info)); //this makes no
+			delete->label = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to delete
+			strcpy(delete->label, line); //How should we do it ???
+			result = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
+			if (result == NULL) {
+				printf("NULL\n");
+			} else {
+				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
+				result = tdelete(delete, &root, compar);
+				free(delete->label);
+				free(delete);
+			}
 			break;
 		}
 	}
