@@ -19,10 +19,10 @@ typedef struct node {
 void *root;
 
 static int compar(const void *pa, const void *pb){
-  Info * la = (Info *) ((Node *) pa)->value;
-  Info * lb = (Info *) ((Node *) pb)->value;
-
-  return strcmp(la->string, lb->string);
+  char *firstString = ((Info *) pa)->string;
+  char *secondString = ((Info *) pb)->string;
+  
+  return strcmp(firstString, secondString);
 }
 
 void *tsearch(const void *key, void **rootp, int (*compar)(const void *, const void *)){
@@ -36,8 +36,10 @@ void *tsearch(const void *key, void **rootp, int (*compar)(const void *, const v
   }
   else{
     Node *aux = *rootp;
+    int compare;
     while(1){
-      if((compar(aux->value, key)) < 0){
+      compare = (compar(aux->value, key));
+      if(compare < 0){
 	if(aux->left == NULL){
 	  Node *new = malloc(sizeof(Node));
 	  new->value = key;
@@ -51,7 +53,7 @@ void *tsearch(const void *key, void **rootp, int (*compar)(const void *, const v
 	  aux = aux->left;
 	}
       }
-      else if((compar(aux->value, key)) > 0){
+      else if(compare > 0){
 	if(aux->right == NULL){
 	  Node *new = malloc(sizeof(Node));
 	  new->value = key;
@@ -74,25 +76,25 @@ void *tsearch(const void *key, void **rootp, int (*compar)(const void *, const v
   }
 }
 
-/*Node * tfind(char *s){
-  if (root == NULL){
+void * tfind(const void *key, void **rootp, int (*compar)(const void *, const void *)){
+  if (*rootp == NULL){
     return NULL;
   }
   else{
-    Node *aux = root;
+    Node *aux = *rootp;
+    int compare;
     while(1){
-      if((strcmp(aux->value, s)) < 0){
+      compare = (compar(aux->value, key));
+      if(compare < 0){
 	if(aux->left == NULL){
-	  printf("NULL\n");
 	  return NULL;
 	}
 	else{
 	  aux = aux->left;
 	}
       }
-      else if((strcmp(aux->value, s)) > 0){
+      else if(compare > 0){
 	if(aux->right == NULL){
-	  printf("NULL\n");
 	  return NULL;
 	}
 	else{
@@ -100,14 +102,13 @@ void *tsearch(const void *key, void **rootp, int (*compar)(const void *, const v
 	}
       }
       else{
-	printf("%d\n",aux->numOfOcc);
 	return aux;
       }
     }
   }
 }
 
-Node * tdelete(char *s){ //TODO IF REMOVE ROOT
+/*Node * tdelete(char *s){ //TODO IF REMOVE ROOT
   if (root == NULL){
     return NULL;
   }
@@ -196,19 +197,30 @@ int main(){
   size_t sizeOfLine;
   for(i = 1; i <= numOfLines; i++){
     getline(&line, &sizeOfLine, stdin);
-    line[strlen(line) -1] = '\0'; //TODO ASK IF ALL STRINGS HAVE SAME LENGTH
+    int lineSize = strlen(line);
+    line[lineSize - 1] = '\0'; //TODO ASK IF ALL STRINGS HAVE SAME LENGTH
+    void * result;
     switch(line[0]){
       case 'A':
 	memmove(line, line+1, strlen(line)); // take first and
 	memmove(line, line+1, strlen(line)); // second letter out
 	Info * info = malloc(sizeof(Info));
+	info->string = malloc(sizeof(char) * lineSize);
 	strcpy(info->string, line);
-	tsearch(info, &root, compar);
+	result = tsearch(info, &root, compar);
+	((Info *)((Node *) result)->value)->numOfOcc += 1;
+	printf("%d\n", ((Info *)((Node *) result)->value)->numOfOcc);
 	break;
       /*case 'F':
 	memmove(line, line+1, strlen(line)); //TODO TEST MEMORY LEAK
 	memmove(line, line+1, strlen(line));
-	tfind(line);
+	result = tfind(info, &root, compar);
+	if (result == NULL){
+	  printf("NULL\n");
+	}
+	else{
+	  printf("%d\n", ((Info *)((Node *) result)->value)->numOfOcc);
+	}
 	break;
       case 'D':
 	memmove(line, line+1, strlen(line));
