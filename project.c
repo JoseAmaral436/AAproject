@@ -108,16 +108,18 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
   }
 }
 
-/*void * tdelete(char *s){ //TODO IF REMOVE ROOT
-  if (root == NULL){
+void * tdelete(const void *key, void **rootp, int (*compar)(const void *, const void *)){ //TODO IF REMOVE ROOT
+  if (*rootp == NULL){
     return NULL;
   }
   else{
     Node *parent = NULL;
-    Node *curr = root;
+    Node *curr = *rootp;
     int parentage = -1; //0 if left, 1 if right
+    int compare;
     while(1){
-      if((strcmp(curr->value, s)) < 0){
+      compare = (compar(curr->value, key));
+      if(compare < 0){
 	if(curr->left == NULL){
 	  printf("NULL\n");
 	  return NULL;
@@ -128,7 +130,7 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
 	  parentage = 0;
 	}
       }
-      else if((strcmp(curr->value, s)) > 0){
+      else if(compare > 0){
 	if(curr->right == NULL){
 	  printf("NULL\n");
 	  return NULL;
@@ -140,9 +142,8 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
 	}
       }
       else{
-	printf("%d\n",curr->numOfOcc);
 	if ((curr->left == NULL) && (curr->right == NULL)){ // no CHILD
-	  free(curr->value);
+	  free((void *) curr->value);
 	  free(curr);
 	  if (parentage == 0){
 	    parent->left = NULL;
@@ -152,7 +153,7 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
 	  }
 	}
 	else if ((!(curr->left == NULL)) != (!(curr->right == NULL))){ //XOR , only one child
-	  free(curr->value);
+	  free((void *) curr->value);
 	  free(curr);
 	  if (parentage == 0){
 	    if (curr->left == NULL){
@@ -178,7 +179,7 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
       }
     }
   }
-}*/
+}
 
 int main(){
   root = NULL;
@@ -232,14 +233,23 @@ int main(){
 	free(find->string);
 	free(find);
 	break;
-      /*case 'D':
+      case 'D':
 	memmove(line, line+1, strlen(line));
 	memmove(line, line+1, strlen(line));
 	Info * delete = malloc(sizeof(Info)); //this makes no
 	delete->string = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to delete
 	strcpy(delete->string, line); //How should we do it ???
-	result = tdelete(delete, &root, compar);
-	break;*/
+	result = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ? 
+	if (result == NULL){
+	  printf("NULL\n");
+	}
+	else{
+	  printf("%d\n", ((Info *)((Node *) result)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
+	  result = tdelete(delete, &root, compar);
+	  free(delete->string);
+	  free(delete);
+	}
+	break;
     }
   }
   return 0;
