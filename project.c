@@ -2,78 +2,86 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct node {
+
+typedef struct info {
   int numOfOcc;
   char *string;
+} Info;
+
+
+typedef struct node {
+/*  int numOfOcc;*/
+  const void *value;
   struct node *left;
   struct node *right;
 } Node;
 
-Node *root;
+void *root;
 
-void tsearch(char *s){
-  int size = strlen(s);
-  if (root == NULL){
-    root = malloc(sizeof(Node));
-    root->string = malloc(sizeof(char) * size);
-    strcpy(root->string, s);
-    root->numOfOcc = 1;
-    root->left = NULL;
-    root->right = NULL;
-    printf("%d\n",root->numOfOcc);
+static int compar(const void *pa, const void *pb){
+  Info * la = (Info *) ((Node *) pa)->value;
+  Info * lb = (Info *) ((Node *) pb)->value;
+
+  return strcmp(la->string, lb->string);
+}
+
+void *tsearch(const void *key, void **rootp, int (*compar)(const void *, const void *)){
+  if (*rootp == NULL){
+    *rootp = malloc(sizeof(Node));
+    ((Node *)(*rootp))->value = key;
+    ((Node *)(*rootp))->left = NULL;
+    ((Node *)(*rootp))->right = NULL;
+    return *rootp;
+    //printf("%d\n", key->numOfOcc);
   }
   else{
-    Node *aux = root;
+    Node *aux = *rootp;
     while(1){
-      if((strcmp(aux->string, s)) < 0){
+      if((compar(aux->value, key)) < 0){
 	if(aux->left == NULL){
 	  Node *new = malloc(sizeof(Node));
-	  new->string = malloc(sizeof(char) * size);
-	  strcpy(new->string, s);
-	  new->numOfOcc = 1;
+	  new->value = key;
 	  new->left = NULL;
-	  new->left = NULL;
+	  new->right = NULL;
 	  aux->left = new;
-	  printf("%d\n",new->numOfOcc);
-	  break;
+	  //printf("%d\n",key->numOfOcc);
+	  return new;
 	}
 	else{
 	  aux = aux->left;
 	}
       }
-      else if((strcmp(aux->string, s)) > 0){
+      else if((compar(aux->value, key)) > 0){
 	if(aux->right == NULL){
 	  Node *new = malloc(sizeof(Node));
-	  new->string = malloc(sizeof(char) * size);
-	  strcpy(new->string, s);
-	  new->numOfOcc = 1;
+	  new->value = key;
 	  new->left = NULL;
 	  new->right = NULL;
 	  aux->right = new;
-	  printf("%d\n",new->numOfOcc);
-	  break;
+	  //printf("%d\n",key->numOfOcc);
+	  return new;
 	}
 	else{
 	  aux = aux->right;
 	}
       }
       else{
-	aux->numOfOcc = aux->numOfOcc + 1;
-	printf("%d\n",aux->numOfOcc);
-	break;
+	//key->numOfOcc = key->numOfOcc + 1;
+	//printf("%d\n",key->numOfOcc);
+	return aux;
       }
     }
   }
 }
 
-Node * tfind(char *s){
+/*Node * tfind(char *s){
   if (root == NULL){
     return NULL;
   }
   else{
     Node *aux = root;
     while(1){
-      if((strcmp(aux->string, s)) < 0){
+      if((strcmp(aux->value, s)) < 0){
 	if(aux->left == NULL){
 	  printf("NULL\n");
 	  return NULL;
@@ -82,7 +90,7 @@ Node * tfind(char *s){
 	  aux = aux->left;
 	}
       }
-      else if((strcmp(aux->string, s)) > 0){
+      else if((strcmp(aux->value, s)) > 0){
 	if(aux->right == NULL){
 	  printf("NULL\n");
 	  return NULL;
@@ -108,7 +116,7 @@ Node * tdelete(char *s){ //TODO IF REMOVE ROOT
     Node *curr = root;
     int parentage = -1; //0 if left, 1 if right
     while(1){
-      if((strcmp(curr->string, s)) < 0){
+      if((strcmp(curr->value, s)) < 0){
 	if(curr->left == NULL){
 	  printf("NULL\n");
 	  return NULL;
@@ -119,7 +127,7 @@ Node * tdelete(char *s){ //TODO IF REMOVE ROOT
 	  parentage = 0;
 	}
       }
-      else if((strcmp(curr->string, s)) > 0){
+      else if((strcmp(curr->value, s)) > 0){
 	if(curr->right == NULL){
 	  printf("NULL\n");
 	  return NULL;
@@ -133,7 +141,7 @@ Node * tdelete(char *s){ //TODO IF REMOVE ROOT
       else{
 	printf("%d\n",curr->numOfOcc);
 	if ((curr->left == NULL) && (curr->right == NULL)){ // no CHILD
-	  free(curr->string);
+	  free(curr->value);
 	  free(curr);
 	  if (parentage == 0){
 	    parent->left = NULL;
@@ -143,7 +151,7 @@ Node * tdelete(char *s){ //TODO IF REMOVE ROOT
 	  }
 	}
 	else if ((!(curr->left == NULL)) != (!(curr->right == NULL))){ //XOR , only one child
-	  free(curr->string);
+	  free(curr->value);
 	  free(curr);
 	  if (parentage == 0){
 	    if (curr->left == NULL){
@@ -169,9 +177,10 @@ Node * tdelete(char *s){ //TODO IF REMOVE ROOT
       }
     }
   }
-}
+}*/
 
 int main(){
+  root = NULL;
   int numOfLines;
   char *number = NULL;
   size_t size;
@@ -187,15 +196,17 @@ int main(){
   size_t sizeOfLine;
   for(i = 1; i <= numOfLines; i++){
     getline(&line, &sizeOfLine, stdin);
-    line[8] = '\0'; //TODO ASK IF ALL STRINGS HAVE SAME LENGTH
+    line[strlen(line) -1] = '\0'; //TODO ASK IF ALL STRINGS HAVE SAME LENGTH
     switch(line[0]){
       case 'A':
-	memmove(line, line+1, strlen(line));
-	memmove(line, line+1, strlen(line));
-	tsearch(line);
+	memmove(line, line+1, strlen(line)); // take first and
+	memmove(line, line+1, strlen(line)); // second letter out
+	Info * info = malloc(sizeof(Info));
+	strcpy(info->string, line);
+	tsearch(info, &root, compar);
 	break;
-      case 'F':
-	memmove(line, line+1, strlen(line));
+      /*case 'F':
+	memmove(line, line+1, strlen(line)); //TODO TEST MEMORY LEAK
 	memmove(line, line+1, strlen(line));
 	tfind(line);
 	break;
@@ -203,9 +214,8 @@ int main(){
 	memmove(line, line+1, strlen(line));
 	memmove(line, line+1, strlen(line));
 	tdelete(line);
-	break;
+	break;*/
     }
   }
-  free(line);
   return 0;
 }
