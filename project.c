@@ -65,133 +65,126 @@ void *tsearch(const void *key, void **rootp,
 	}
 }
 
-Node * findmin(void **rootp, int (*compar)(const void *, const void *)){
-  if (*rootp == NULL){
-    return NULL;
-  }
-  else{
-    Node *aux = *rootp;
-    while(1){
-      if(aux->left == NULL){
-	return aux;
-      }
-      else{
-	aux = aux->left;
-      }
-    }
-  }
+Node * findmin(void **rootp, int (*compar)(const void *, const void *)) {
+	if (*rootp == NULL) {
+		return NULL;
+	} else {
+		Node *aux = *rootp;
+		while (1) {
+			if (aux->left == NULL) {
+				return aux;
+			} else {
+				aux = aux->left;
+			}
+		}
+	}
 }
 
-
-
-
-void * tfind(const void *key, void **rootp, int (*compar)(const void *, const void *)){
-  if (*rootp == NULL){
-    return NULL;
-  }
-  else{
-    Node *aux = *rootp;
-    int compare;
-    while(1){
-      compare = (compar(&(aux->value), &key));
-      if(compare < 0){
-	if(aux->left == NULL){
-	  return NULL;
+void * tfind(const void *key, void **rootp,
+		int (*compar)(const void *, const void *)) {
+	if (*rootp == NULL) {
+		return NULL;
+	} else {
+		Node *aux = *rootp;
+		int compare;
+		while (1) {
+			compare = (compar(&(aux->value), &key));
+			if (compare < 0) {
+				if (aux->left == NULL) {
+					return NULL;
+				} else {
+					aux = aux->left;
+				}
+			} else if (compare > 0) {
+				if (aux->right == NULL) {
+					return NULL;
+				} else {
+					aux = aux->right;
+				}
+			} else {
+				return aux;
+			}
+		}
 	}
-	else{
-	  aux = aux->left;
-	}
-      }
-      else if(compare > 0){
-	if(aux->right == NULL){
-	  return NULL;
-	}
-	else{
-	  aux = aux->right;
-	}
-      }
-      else{
-	return aux;
-      }
-    }
-  }
 }
 
-void * tdelete(const void *key, void **rootp, int (*compar)(const void *, const void *)){ //TODO IF REMOVE ROOT
-  if (*rootp == NULL){
-    return NULL;
-  }
-  else{
-    Node *parent = NULL;
-    Node *curr = *rootp;
-    int parentage = -1; //0 if left, 1 if right
-    int compare;
-    while(1){
-      compare = (compar(&(curr->value), &key));
-      if(compare < 0){
-	if(curr->left == NULL){
-	  printf("NULL\n");
-	  return NULL;
+void * tdelete(const void *key, void **rootp,
+		int (*compar)(const void *, const void *)) { //TODO IF REMOVE ROOT
+	if (*rootp == NULL) {
+		return NULL;
+	} else {
+		Node *parent = NULL;
+		Node *curr = *rootp;
+		int parentage = -1; //0 if left, 1 if right
+		int compare;
+		while (1) {
+			compare = (compar(&(curr->value), &key));
+			if (compare < 0) {
+				if (curr->left == NULL) {
+					printf("NULL\n");
+					return NULL;
+				} else {
+					parent = curr;
+					curr = curr->left;
+					parentage = 0;
+				}
+			} else if (compare > 0) {
+				if (curr->right == NULL) {
+					printf("NULL\n");
+					return NULL;
+				} else {
+					parent = curr;
+					curr = curr->right;
+					parentage = 1;
+				}
+			} else {
+				if (curr == *rootp) {
+					free((void *) curr->value);
+					free(curr);
+					curr = NULL;
+					*rootp = NULL;
+					return NULL;
+				}
+				if ((curr->left == NULL) && (curr->right == NULL)) { // no CHILD
+					free((void *) curr->value);
+					free(curr);
+					if (parentage == 0) {
+						parent->left = NULL;
+					} else if (parentage == 1) {
+						parent->right = NULL;
+					}
+					curr = NULL;
+				} else if ((!(curr->left == NULL))
+						!= (!(curr->right == NULL))) { //XOR , only one child
+					if (parentage == 0) {
+						if (curr->left == NULL) {
+							parent->left = curr->right;
+						} else {
+							parent->left = curr->left;
+						}
+					} else if (parentage == 1) {
+						if (curr->left == NULL) {
+							parent->right = curr->right;
+						} else {
+							parent->right = curr->left;
+						}
+					}
+					free((void *) curr->value);
+					free(curr);
+					curr = NULL;
+				} else { // 2 CHILDREN : find min of sub right tree;substitute value;delete curr TODO NEED TESTING
+					Node *min;
+					min = findmin(((void *) &(curr->right)), compar); //min has the node with min in subright tree
+					strcpy(((Info * )curr->value)->label,
+							((Info * )min->value)->label); // copy value from min to found node
+					((Info *) curr->value)->numOfOcc =
+							((Info *) min->value)->numOfOcc; // copy number of occ
+					tdelete(min, ((void **) &(curr->right)), compar); // delete the old min node
+				}
+				return parent; // RETURN PARENT of deleted node
+			}
+		}
 	}
-	else{
-	  parent = curr;
-	  curr = curr->left;
-	  parentage = 0;
-	}
-      }
-      else if(compare > 0){
-	if(curr->right == NULL){
-	  printf("NULL\n");
-	  return NULL;
-	}
-	else{
-	  parent = curr;
-	  curr = curr->right;
-	  parentage = 1;
-	}
-      }
-      else{
-	if ((curr->left == NULL) && (curr->right == NULL)){ // no CHILD
-	  free((void *) curr->value);
-	  free(curr);
-	  if (parentage == 0){
-	    parent->left = NULL;
-	  }
-	  else if (parentage == 1){
-	    parent->right = NULL;
-	  }
-	}
-	else if ((!(curr->left == NULL)) != (!(curr->right == NULL))){ //XOR , only one child
-	  if (parentage == 0){
-	    if (curr->left == NULL){
-	      parent->left = curr->right;
-	    }
-	    else{
-	      parent->left = curr->left;
-	    }
-	  }
-	  else if (parentage == 1){
-	    if (curr->left == NULL){
-	      parent->right = curr->right;
-	    }
-	    else{
-	      parent->right = curr->left;
-	    }
-	  }
-	  free((void *) curr->value);
-	  free(curr);
-	}
-	else{ // 2 CHILDREN : find min of sub right tree;substitute value;delete curr TODO NEED TESTING
-	  Node *min;
-	  min = findmin(((void *)&(curr->right)), compar); //min has the node with min in subright tree
-	  strcpy(((Info *)curr->value)->label, ((Info *)min->value)->label); // copy value from min to found node
-	  ((Info *)curr->value)->numOfOcc = ((Info *)min->value)->numOfOcc; // copy number of occ
-	  tdelete(min, ((void **) &(curr->right)), compar); // delete the old min node
-	}
-	return parent; // RETURN PARENT of deleted node
-      }
-    }
-  }
 }
 
 int main() {
@@ -230,7 +223,7 @@ int main() {
 			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
 			memmove(line, line + 1, strlen(line));
 			Info * find = malloc(sizeof(Info)); //this makes no
-			find->label = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to find
+			find->label = malloc(sizeof(line)); //sense ... why should we do new Info* just to find
 			strcpy(find->label, line); //How should we do it ???
 			result = tfind(find, &root, compar);
 			if (result == NULL) {
@@ -245,9 +238,9 @@ int main() {
 			memmove(line, line + 1, strlen(line));
 			memmove(line, line + 1, strlen(line));
 			Info * delete = malloc(sizeof(Info)); //this makes no
-			delete->label = malloc(sizeof(char) * lineSize); //sense ... why should we do new Info* just to delete
+			delete->label = malloc(sizeof(line)); //sense ... why should we do new Info* just to delete
 			strcpy(delete->label, line); //How should we do it ???
-			result = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
+			result = tfind(delete, &root, compar); // CAN WE USE FIND IN CASE D ?
 			if (result == NULL) {
 				printf("NULL\n");
 			} else {
