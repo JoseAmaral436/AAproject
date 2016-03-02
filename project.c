@@ -32,8 +32,9 @@ void *tsearch(const void *key, void **rootp,
 		return *rootp;
 	} else {
 		Node *aux = *rootp;
+		int cmp;
 		while (aux != NULL) {
-			int cmp = compar(&(aux->value), &key);
+			cmp = compar(&(aux->value), &key);
 			if (cmp < 0) {
 				if (aux->left == NULL) {
 					Node *new = malloc(sizeof(Node));
@@ -64,6 +65,26 @@ void *tsearch(const void *key, void **rootp,
 	}
 }
 
+Node * findmin(void **rootp, int (*compar)(const void *, const void *)){
+  if (*rootp == NULL){
+    return NULL;
+  }
+  else{
+    Node *aux = *rootp;
+    while(1){
+      if(aux->left == NULL){
+	return aux;
+      }
+      else{
+	aux = aux->left;
+      }
+    }
+  }
+}
+
+
+
+
 void * tfind(const void *key, void **rootp, int (*compar)(const void *, const void *)){
   if (*rootp == NULL){
     return NULL;
@@ -72,7 +93,7 @@ void * tfind(const void *key, void **rootp, int (*compar)(const void *, const vo
     Node *aux = *rootp;
     int compare;
     while(1){
-      compare = (compar(aux->value, key));
+      compare = (compar(&(aux->value), &key));
       if(compare < 0){
 	if(aux->left == NULL){
 	  return NULL;
@@ -106,7 +127,7 @@ void * tdelete(const void *key, void **rootp, int (*compar)(const void *, const 
     int parentage = -1; //0 if left, 1 if right
     int compare;
     while(1){
-      compare = (compar(curr->value, key));
+      compare = (compar(&(curr->value), &key));
       if(compare < 0){
 	if(curr->left == NULL){
 	  printf("NULL\n");
@@ -141,8 +162,6 @@ void * tdelete(const void *key, void **rootp, int (*compar)(const void *, const 
 	  }
 	}
 	else if ((!(curr->left == NULL)) != (!(curr->right == NULL))){ //XOR , only one child
-	  free((void *) curr->value);
-	  free(curr);
 	  if (parentage == 0){
 	    if (curr->left == NULL){
 	      parent->left = curr->right;
@@ -159,15 +178,22 @@ void * tdelete(const void *key, void **rootp, int (*compar)(const void *, const 
 	      parent->right = curr->left;
 	    }
 	  }
+	  free((void *) curr->value);
+	  free(curr);
 	}
-	else{ // TODO 2 CHILDREN
-
+	else{ // 2 CHILDREN : find min of sub right tree;substitute value;delete curr TODO NEED TESTING
+	  Node *min;
+	  min = findmin(((void *)&(curr->right)), compar); //min has the node with min in subright tree
+	  strcpy(((Info *)curr->value)->label, ((Info *)min->value)->label); // copy value from min to found node
+	  ((Info *)curr->value)->numOfOcc = ((Info *)min->value)->numOfOcc; // copy number of occ
+	  tdelete(min, ((void **) &(curr->right)), compar); // delete the old min node
 	}
 	return parent; // RETURN PARENT of deleted node
       }
     }
   }
 }
+
 int main() {
 	root = NULL;
 	int numOfLines = 0;
