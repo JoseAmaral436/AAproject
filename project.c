@@ -214,6 +214,18 @@ void * tdelete(const void *key, void **rootp,
 	}
 }
 
+void clean(Node * node){
+  if (node != NULL){
+    printf("%s\n", ((Info *)(node->value))->label);
+    free(((Info *)(node->value))->label);
+    free((void *)node->value);
+    clean(node->left);
+    clean(node->right);
+    free(node);
+  }
+}
+
+
 int main() {
 	root = NULL;
 	int numOfLines = 0;
@@ -224,10 +236,11 @@ int main() {
 	} else {
 		numOfLines = atoi(number);
 	}
+	free(number);
 	int i;
 	char *line = NULL;
 	size_t sizeOfLine;
-	Info * find = malloc(sizeof(Info)); 
+	Info * find = malloc(sizeof(Info));
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
 		int lineSize = strlen(line);
@@ -238,13 +251,19 @@ int main() {
 		}
 		switch (line[0]) {
 		case 'A':
-			line = line + 2; //TODO TEST MEMORY LEAK
-			Info *info = malloc(sizeof(Info));
+			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
+			memmove(line, line + 1, strlen(line));
+			Info * info = malloc(sizeof(Info));
 			info->label = malloc(sizeof(line));
+			info->numOfOcc = 0;
 			strcpy(info->label, line);
 			Node *result = tsearch(info, &root, compar);
+			if (((Info*) (result->value))->numOfOcc != 0){
+			  free(info->label);
+			  free(info);
+			}
 			((Info*) (result->value))->numOfOcc++;
-			printf("%d\n", ((Info*) (result->value))->numOfOcc);
+			//printf("%d\n", ((Info*) (result->value))->numOfOcc);
 			break;
 		case 'F':
 			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
@@ -253,9 +272,9 @@ int main() {
 			strcpy(find->label, line); 
 			result = tfind(find, &root, compar);
 			if (result == NULL) {
-				printf("NULL\n");
+				//printf("NULL\n");
 			} else {
-				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
+				//printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
 			}
 			free(find->label);
 			break;
@@ -266,15 +285,17 @@ int main() {
 			strcpy(find->label, line); 
 			result = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
 			if (result == NULL) {
-				printf("NULL\n");
+				//printf("NULL\n");
 			} else {
-				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
+				//printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
 				result = tdelete(find, &root, compar);
 				free(find->label);
 			}
 			break;
 		}
 	}
+	clean(root);
+	free(line);
 	free(find);
 	return 0;
 }
