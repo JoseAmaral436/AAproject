@@ -18,7 +18,7 @@ void *root;
 static int compar(const void *pa, const void *pb) {
 	Info * la = (Info *) ((Node *) pa)->value;
 	Info * lb = (Info *) ((Node *) pb)->value;
-
+	
 	return strcmp(la->label, lb->label);
 }
 
@@ -34,7 +34,7 @@ void *tsearch(const void *key, void **rootp,
 		Node *aux = *rootp;
 		int cmp;
 		while (aux != NULL) {
-			cmp = compar(&(aux->value), &key);
+			cmp = compar(&key, &(aux->value));
 			if (cmp < 0) {
 				if (aux->left == NULL) {
 					Node *new = malloc(sizeof(Node));
@@ -65,7 +65,7 @@ void *tsearch(const void *key, void **rootp,
 	}
 }
 
-Node * findmin(void **rootp, int (*compar)(const void *, const void *)) {
+/*Node * findmin(void **rootp, int (*compar)(const void *, const void *)) {
 	if (*rootp == NULL) {
 		return NULL;
 	} else {
@@ -78,7 +78,7 @@ Node * findmin(void **rootp, int (*compar)(const void *, const void *)) {
 			}
 		}
 	}
-}
+}*/
 
 void * tfind(const void *key, void **rootp,
 		int (*compar)(const void *, const void *)) {
@@ -88,7 +88,8 @@ void * tfind(const void *key, void **rootp,
 		Node *aux = *rootp;
 		int compare;
 		while (1) {
-			compare = (compar(&(aux->value), &key));
+		  
+			compare = (compar(&key, &(aux->value)));
 			if (compare < 0) {
 				if (aux->left == NULL) {
 					return NULL;
@@ -102,6 +103,7 @@ void * tfind(const void *key, void **rootp,
 					aux = aux->right;
 				}
 			} else {
+			  
 				return aux;
 			}
 		}
@@ -118,10 +120,9 @@ void * tdelete(const void *key, void **rootp,
 		int parentage = -1; //0 if left, 1 if right
 		int compare;
 		while (1) {
-			compare = (compar(&(curr->value), &key));
+			compare = (compar(&key, &(curr->value)));
 			if (compare < 0) {
 				if (curr->left == NULL) {
-					printf("NULL\n");
 					return NULL;
 				} else {
 					parent = curr;
@@ -130,7 +131,6 @@ void * tdelete(const void *key, void **rootp,
 				}
 			} else if (compare > 0) {
 				if (curr->right == NULL) {
-					printf("NULL\n");
 					return NULL;
 				} else {
 					parent = curr;
@@ -138,16 +138,14 @@ void * tdelete(const void *key, void **rootp,
 					parentage = 1;
 				}
 			} else {
-				if (curr == *rootp) {
-					free((void *) curr->value);
-					free(curr);
-					curr = NULL;
-					*rootp = NULL;
-					return NULL;
-				}
 				if ((curr->left == NULL) && (curr->right == NULL)) { // no CHILD
 					free((void *) curr->value);
 					free(curr);
+					if (curr == *rootp){ // if root
+					  curr = NULL;
+					  *rootp = NULL;
+					  return NULL;
+					}
 					if (parentage == 0) {
 						parent->left = NULL;
 					} else if (parentage == 1) {
@@ -169,17 +167,46 @@ void * tdelete(const void *key, void **rootp,
 							parent->right = curr->left;
 						}
 					}
+					else{ // if root
+					  if (curr->left == NULL) {
+						  *rootp = curr->right;
+					  } else {
+						  *rootp = curr->left;
+					  }
+					}
 					free((void *) curr->value);
 					free(curr);
 					curr = NULL;
 				} else { // 2 CHILDREN : find min of sub right tree;substitute value;delete curr TODO NEED TESTING
-					Node *min;
-					min = findmin(((void *) &(curr->right)), compar); //min has the node with min in subright tree
-					strcpy(((Info * )curr->value)->label,
-							((Info * )min->value)->label); // copy value from min to found node
-					((Info *) curr->value)->numOfOcc =
-							((Info *) min->value)->numOfOcc; // copy number of occ
-					tdelete(min, ((void **) &(curr->right)), compar); // delete the old min node
+					Node *minParent = curr;
+					Node *min = curr->right;
+					while (min->left != NULL) {
+					  minParent = min;
+					  min = min->left;
+					}
+					//printf("min  :%s\n", ((Info *)(((Node *)min)->value))->label);
+					if (curr == *rootp){
+					  *rootp = min;
+					  min->right = curr->right;
+					  min->left = curr->left;
+					}
+					else if (curr->right == min){
+					  if (parentage == 0) {
+					    parent->left = min;
+					    min->left = curr->left;
+					  } else if (parentage == 1) {
+					    parent->right = min;
+					    min->left = curr->left;
+					  }
+
+					}
+					else{
+					  min->right = curr->right;
+					  curr = min;
+					  minParent->left = NULL;
+					}
+					free((void *) curr->value);
+					free(curr);
 				}
 				return parent; // RETURN PARENT of deleted node
 			}
@@ -197,10 +224,10 @@ int main() {
 	} else {
 		numOfLines = atoi(number);
 	}
-	printf("%d\n", numOfLines);
 	int i;
 	char *line = NULL;
 	size_t sizeOfLine;
+	Info * find = malloc(sizeof(Info)); 
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
 		int lineSize = strlen(line);
@@ -222,9 +249,8 @@ int main() {
 		case 'F':
 			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
 			memmove(line, line + 1, strlen(line));
-			Info * find = malloc(sizeof(Info)); //this makes no
-			find->label = malloc(sizeof(line)); //sense ... why should we do new Info* just to find
-			strcpy(find->label, line); //How should we do it ???
+			find->label = malloc(sizeof(line)); 
+			strcpy(find->label, line); 
 			result = tfind(find, &root, compar);
 			if (result == NULL) {
 				printf("NULL\n");
@@ -232,25 +258,23 @@ int main() {
 				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
 			}
 			free(find->label);
-			free(find);
 			break;
 		case 'D':
 			memmove(line, line + 1, strlen(line));
 			memmove(line, line + 1, strlen(line));
-			Info * delete = malloc(sizeof(Info)); //this makes no
-			delete->label = malloc(sizeof(line)); //sense ... why should we do new Info* just to delete
-			strcpy(delete->label, line); //How should we do it ???
-			result = tfind(delete, &root, compar); // CAN WE USE FIND IN CASE D ?
+			find->label = malloc(sizeof(line)); 
+			strcpy(find->label, line); 
+			result = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
 			if (result == NULL) {
 				printf("NULL\n");
 			} else {
 				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
-				result = tdelete(delete, &root, compar);
-				free(delete->label);
-				free(delete);
+				result = tdelete(find, &root, compar);
+				free(find->label);
 			}
 			break;
 		}
 	}
+	free(find);
 	return 0;
 }
