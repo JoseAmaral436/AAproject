@@ -139,6 +139,7 @@ void * tdelete(const void *key, void **rootp,
 				}
 			} else {
 				if ((curr->left == NULL) && (curr->right == NULL)) { // no CHILD
+					free(((Info *) (curr->value))->label); //TODO HOW TO FREE LABEL IF WE DONT KNOW IT EXISTS / CANT FREE OUTSIDE BECAUSE RETURN VALUE IS PARENT
 					free((void *) curr->value);
 					free(curr);
 					if (curr == *rootp){ // if root
