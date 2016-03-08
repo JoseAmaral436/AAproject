@@ -139,9 +139,6 @@ void * tdelete(const void *key, void **rootp,
 				}
 			} else {
 				if ((curr->left == NULL) && (curr->right == NULL)) { // no CHILD
-					free(((Info *) (curr->value))->label); //TODO HOW TO FREE LABEL IF WE DONT KNOW IT EXISTS / CANT FREE OUTSIDE BECAUSE RETURN VALUE IS PARENT
-					free((void *) curr->value);
-					free(curr);
 					if (curr == *rootp){ // if root
 					  curr = NULL;
 					  *rootp = NULL;
@@ -175,10 +172,8 @@ void * tdelete(const void *key, void **rootp,
 						  *rootp = curr->left;
 					  }
 					}
-					free((void *) curr->value);
-					free(curr);
 					curr = NULL;
-				} else { // 2 CHILDREN : find min of sub right tree;substitute value;delete curr TODO NEED TESTING
+				} else { // 2 CHILDREN 
 					Node *minParent = curr;
 					Node *min = curr->right;
 					while (min->left != NULL) {
@@ -206,8 +201,6 @@ void * tdelete(const void *key, void **rootp,
 					  curr = min;
 					  minParent->left = NULL;
 					}
-					free((void *) curr->value);
-					free(curr);
 				}
 				return parent; // RETURN PARENT of deleted node
 			}
@@ -217,7 +210,6 @@ void * tdelete(const void *key, void **rootp,
 
 void clean(Node * node){
   if (node != NULL){
-    printf("%s\n", ((Info *)(node->value))->label);
     free(((Info *)(node->value))->label);
     free((void *)node->value);
     clean(node->left);
@@ -243,6 +235,7 @@ int main() {
 	size_t sizeOfLine;
 	Info * find = malloc(sizeof(Info));
 	for (i = 1; i <= numOfLines; i++) {
+		Node *result = NULL;
 		getline(&line, &sizeOfLine, stdin);
 		int lineSize = strlen(line);
 		if (i != numOfLines) {
@@ -258,13 +251,13 @@ int main() {
 			info->label = malloc(sizeof(line));
 			info->numOfOcc = 0;
 			strcpy(info->label, line);
-			Node *result = tsearch(info, &root, compar);
+			result = tsearch(info, &root, compar);
 			if (((Info*) (result->value))->numOfOcc != 0){
 			  free(info->label);
 			  free(info);
 			}
 			((Info*) (result->value))->numOfOcc++;
-			//printf("%d\n", ((Info*) (result->value))->numOfOcc);
+			printf("%d\n", ((Info*) (result->value))->numOfOcc);
 			break;
 		case 'F':
 			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
@@ -273,9 +266,9 @@ int main() {
 			strcpy(find->label, line); 
 			result = tfind(find, &root, compar);
 			if (result == NULL) {
-				//printf("NULL\n");
+				printf("NULL\n");
 			} else {
-				//printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
+				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
 			}
 			free(find->label);
 			break;
@@ -283,13 +276,17 @@ int main() {
 			memmove(line, line + 1, strlen(line));
 			memmove(line, line + 1, strlen(line));
 			find->label = malloc(sizeof(line)); 
-			strcpy(find->label, line); 
-			result = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
-			if (result == NULL) {
-				//printf("NULL\n");
+			strcpy(find->label, line);
+			Node *toDelete = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
+			if (toDelete == NULL) {
+				printf("NULL\n");
+				free(find->label);
 			} else {
-				//printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
+				printf("%d\n", ((Info *) ((Node *) toDelete)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
 				result = tdelete(find, &root, compar);
+				free(((Info *) ((Node *) toDelete)->value)->label);
+				free(((void *)((Node *) toDelete)->value));
+				free(toDelete);
 				free(find->label);
 			}
 			break;
