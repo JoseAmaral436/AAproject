@@ -19,14 +19,29 @@ typedef struct point {
 } Point;
 
 
-void buildST(char* string){
-
+void buildST(char* string, int ni[],int numberOfStrings){
 	Node *root = malloc(sizeof(Node));
 	Node *sentinel = malloc(sizeof(Node));
 	root->slink = sentinel;
-//	sentinel->child = root;
-
-
+	sentinel->child = root;
+	Point *p = malloc(sizeof(Point));
+	p->a = root;
+	p->b = root;
+	p->s = 0;
+	int i = 0;
+	int strIndex = 0;
+	while(i < numberOfStrings){
+		j = 0;
+		while(j <= ni[i]){
+			while(!DescendQ(p,string[strIndex+ j])){
+				
+				
+			}
+		}
+		strIndex = strIndex + ni[i] + 1;
+		i++;
+	}
+	
 
 }
 
@@ -47,7 +62,7 @@ int main() {
 	int MAX_SIZE = 20;
 	char* generalizedString = malloc(sizeof(char) * MAX_SIZE);
 	int idx = 0;
-	int strSize;
+	int strSize[numOfLines];
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
 		int lineSize = strlen(line);
@@ -57,15 +72,15 @@ int main() {
 			line[lineSize] = '\0'; // last string doesnt have '\n'
 		}
 		token = strtok(line, " ");
-		strSize = atoi(token);
-		if (strlen(generalizedString) + strSize >= MAX_SIZE) {
+		strSize[i-1] = atoi(token);
+		if (strlen(generalizedString) + strSize[i-1] >= MAX_SIZE) {
 			generalizedString = realloc(generalizedString,
-					2 * MAX_SIZE + strSize);
+					2 * MAX_SIZE + strSize[i-1]);
 			MAX_SIZE *= 2;
 		}
 		token = strtok(NULL, " ");
 		int j = 0;
-		int max = idx + strSize;
+		int max = idx + strSize[i-1];
 		for (; idx < max; idx++) {
 			generalizedString[idx] = token[j++];
 		}
@@ -74,8 +89,10 @@ int main() {
 	}
 	generalizedString[idx] = '\0';
 	printf("%s\n", generalizedString);
-
-	buildST(generalizedString);
+	/*for (i = 0; i < numOfLines; i++) {
+		printf("%d ", strSize[i]);
+	}*/
+	buildST(generalizedString, strSize, numOfLines);
 
 	return 0;
 }
