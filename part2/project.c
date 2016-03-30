@@ -19,29 +19,99 @@ typedef struct point {
 } Point;
 
 
-void buildST(char* string, int ni[],int numberOfStrings){
+void AddLeaf(Point *p, int i, int j){
+	Node *node = malloc(sizeof(Node));
+	node->Ti = i;
+	node->head = j;
+	node->sdep = p->s;
+	node->child = NULL;
+	node->brother = NULL;
+	node->slink = NULL;
+	Node *ancestor = p->a;
+	if (ancestor->child == NULL){
+		ancestor->child = node;
+		node->hook = &(ancestor->child);
+	}
+	else{
+		while(ancestor->brother != NULL){
+			ancestor = ancestor->brother;
+		}
+		ancestor->brother = node;
+		node->hook = &(ancestor->brother);
+	}
+}
+void printString(Node *n, char* string, int ni[]){
+	int index;// = n->Ti * ni[n->Ti];
+	int depth = 0;
+	for (index = 0; index < n->Ti; index++){
+		depth = depth + ni[index] + 1;
+	}
+	depth += n->head;
+	int d = depth;
+	for (; depth < d + n->sdep; depth++){
+		printf("%c", string[depth]);
+	}
+	printf("\n");
+	
+}
+
+void printST(Node *root, char* string, int ni[]){
+	if (root->child == NULL){
+		printString(root, string, ni);
+		if (root->brother != NULL){
+			printST(root->brother, string, ni);
+		}
+	}
+	else{
+		printST(root->child, string, ni);
+		if (root->brother != NULL){
+			printST(root->brother, string, ni);
+		}
+	}
+	
+}
+
+
+void SuffixLink(Point *p){
+	p->a = (p->a)->slink;
+	p->b = (p->b)->slink;
+	
+}
+
+
+void Descend(Point *p, char s){
+	p->a = *((p->a)->hook);
+	p->b = *((p->b)->hook);
+}
+
+
+Node * buildST(char* string, int ni[],int numberOfStrings, int strLen){
 	Node *root = malloc(sizeof(Node));
 	Node *sentinel = malloc(sizeof(Node));
 	root->slink = sentinel;
+	root->hook = &(sentinel->child);
 	sentinel->child = root;
 	Point *p = malloc(sizeof(Point));
 	p->a = root;
 	p->b = root;
-	p->s = 0;
+	p->s = strLen;
 	int i = 0;
 	int strIndex = 0;
 	while(i < numberOfStrings){
-		j = 0;
+		int j = 0;
 		while(j <= ni[i]){
-			while(!DescendQ(p,string[strIndex+ j])){
-				
-				
-			}
+			//while(!DescendQ(p,string[strIndex+ j])){
+				AddLeaf(p, i, j);
+				SuffixLink(p);	
+			//}
+			Descend(p, string[strIndex+ j]);
+			p->s = p->s - 1;
+			j++;
 		}
 		strIndex = strIndex + ni[i] + 1;
 		i++;
 	}
-	
+	return root;
 
 }
 
@@ -88,11 +158,11 @@ int main() {
 		idx++;
 	}
 	generalizedString[idx] = '\0';
-	printf("%s\n", generalizedString);
+	//printf("%s\n", generalizedString);
 	/*for (i = 0; i < numOfLines; i++) {
 		printf("%d ", strSize[i]);
 	}*/
-	buildST(generalizedString, strSize, numOfLines);
-
+	Node * root = buildST(generalizedString, strSize, numOfLines, idx);
+	printST(root, generalizedString, strSize);
 	return 0;
 }
