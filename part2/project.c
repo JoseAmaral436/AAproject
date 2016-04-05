@@ -73,6 +73,22 @@ void printST(Node *root, char* string[]){
 }
 
 
+/*void SuffixLink(Point *p){
+	p->s = 0;
+	if(p->a == p->b){
+		p->a = (p->a)->slink;
+		p->b = (p->b)->slink;
+	}
+}*/
+
+
+/*void Descend(Point *p){
+	p->s += 1;
+	if(p->a == p->b){
+		p->b = (p->a)->child; //TODO pode ser brother ?
+	}
+}*/
+
 void SuffixLink(Point *p){
 	p->a = (p->a)->slink;
 	p->b = (p->b)->slink;
@@ -80,11 +96,12 @@ void SuffixLink(Point *p){
 }
 
 
-void Descend(Point *p, char s){
+void Descend(Point *p){
 	p->a = (p->a)->child;
 	p->b = (p->b)->child;
 	p->s += 1;
 }
+
 
 bool DescendQ(Point *p, char c){
 	printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
@@ -119,7 +136,8 @@ Node * buildST(char* string[], int ni[],int numberOfStrings){
 				AddLeaf(p, i, j);
 				SuffixLink(p);
 			//}
-			Descend(p, string[i][j]);
+			//printf("c: %c %d %d\n", string[i][j], (p->a)->sdep, (p->b)->sdep);
+			Descend(p);
 			j++;
 		}
 		i++;
