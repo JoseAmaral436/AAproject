@@ -16,6 +16,7 @@ typedef struct node {
 	struct node *brother; /**< brother */
 	struct node *slink; /**< Suffix link */
 	struct node **hook; /**< What keeps this linked? */
+	char* name;
 } Node;
 
 typedef struct point {
@@ -39,6 +40,7 @@ void AddLeaf(Point *p, int i, int j){
 		node->hook = &(ancestor->child);
 	}
 	else{
+		ancestor = ancestor->child;
 		while(ancestor->brother != NULL){
 			ancestor = ancestor->brother;
 		}
@@ -60,7 +62,6 @@ void printST(Node *root, char* string[]){
 	if (root->child == NULL){
 		printString(root, string);
 		if (root->brother != NULL){
-			printf("printbrother\n");
 			printST(root->brother, string);
 		}
 	}
@@ -98,19 +99,28 @@ void SuffixLink(Point *p){
 
 
 void Descend(Point *p){
-	p->s += 1;
 	if (p->s == (p->b)->sdep){
 		p->a = p->b;
 	}
+	p->s += 1;
 }
 
 
 bool DescendQ(Point *p, char c){
-	printf("%d\n", (p->a)->sdep);
+//	printf("%d\n", (p->a)->sdep);
 	if ((p->a)->sdep == -1){ // Testing if pointing to sentinel
+		p->a = p->a->child;
+		p->b = p->a;
 		return true;
 	}
 	else{
+		if(p->a->child == NULL)
+			return false;
+		char curr = generalizedString[(p->a->child)->Ti][p->s];
+		if(curr != c){
+			return false;
+		}
+		return true;
 //	// TODO UPDATE p->b
 //	printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
 // 	if ((p->a)->child == NULL){
@@ -123,15 +133,28 @@ bool DescendQ(Point *p, char c){
 	}
 }
 
+Node* initNode(){
+	Node* node = malloc(sizeof(Node));
 
+	node->Ti = 0;
+	node->sdep = 0;
+	node->head = 0;
+	node->brother = NULL;
+	node->child = NULL;
+	node->hook = NULL;
+	node->slink = NULL;
+
+	return node;
+}
 Node * buildST(char* string[], int ni[],int numberOfStrings){
-	Node *root = malloc(sizeof(Node));
-	Node *sentinel = malloc(sizeof(Node));
+	Node *root = initNode();
+	Node *sentinel = initNode();
 	root->slink = sentinel;
-	root->sdep = 0;
 	root->hook = &(sentinel->child);
+	root->name = "root";
 	sentinel->child = root;
 	sentinel->sdep = -1;
+	sentinel->name = "sentinel";
 	Point *p = malloc(sizeof(Point));
 	p->a = root;
 	p->b = root;
@@ -145,7 +168,7 @@ Node * buildST(char* string[], int ni[],int numberOfStrings){
 				AddLeaf(p, i, j);
 				SuffixLink(p);
 			}
-			printf("c: %c %d %d\n", string[i][j], (p->a)->sdep, (p->b)->sdep);
+//			printf("c: %c %d %d\n", string[i][j], (p->a)->sdep, (p->b)->sdep);
 			Descend(p);
 			j++;
 		}
@@ -184,7 +207,6 @@ int main() {
 		generalizedString[i-1] = malloc(sizeof(char) * ni[i-1]);
 		strcpy(generalizedString[i-1], token);
 	}
-	
 	Node * root = buildST(generalizedString, ni, numOfLines);
 	printST(root, generalizedString);
 	return 0;
