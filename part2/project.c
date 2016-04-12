@@ -117,10 +117,12 @@ bool DescendQ(Point *p, char c){
 		if(p->a->child == NULL)
 			return false;
 		char curr = generalizedString[(p->a->child)->Ti][p->s];
-		if(curr != c){
-			return false;
-		}
-		return true;
+
+		return curr == c;
+
+
+
+
 //	// TODO UPDATE p->b
 //	printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
 // 	if ((p->a)->child == NULL){
