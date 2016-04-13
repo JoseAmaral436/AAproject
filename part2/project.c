@@ -26,14 +26,27 @@ typedef struct point {
 } Point;
 
 
+Node* initNode(){
+	Node* node = malloc(sizeof(Node));
+
+	node->Ti = 0;
+	node->sdep = 0;
+	node->head = 0;
+	node->brother = NULL;
+	node->child = NULL;
+	node->hook = NULL;
+	node->slink = NULL;
+
+	return node;
+}
+
+
 void AddLeaf(Point *p, int i, int j){
-	Node *node = malloc(sizeof(Node));
+	Node *node = initNode();
 	node->Ti = i;
 	node->head = j;
 	node->sdep = ni[i] - j;
-	node->child = NULL;
-	node->brother = NULL;
-	node->slink = NULL;
+	node->name = generalizedString[node->Ti];
 	Node *ancestor = p->a;
 	if (ancestor->child == NULL){
 		ancestor->child = node;
@@ -48,6 +61,7 @@ void AddLeaf(Point *p, int i, int j){
 		node->hook = &(ancestor->brother);
 	}
 }
+
 void printString(Node *n, char* string[]){
 	int i;
 	int index = n->head + n->sdep + 1;
@@ -75,22 +89,6 @@ void printST(Node *root, char* string[]){
 }
 
 
-/*void SuffixLink(Point *p){
-	p->s = 0;
-	if(p->a == p->b){
-		p->a = (p->a)->slink;
-		p->b = (p->b)->slink;
-	}
-}*/
-
-
-/*void Descend(Point *p){
-	p->s += 1;
-	if(p->a == p->b){
-		p->b = (p->a)->child; //TODO pode ser brother ?
-	}
-}*/
-
 void SuffixLink(Point *p){
 	p->a = (p->a)->slink;
 	p->b = p->a;
@@ -111,18 +109,34 @@ bool DescendQ(Point *p, char c){
 	if ((p->a)->sdep == -1){ // Testing if pointing to sentinel
 		p->a = p->a->child;
 		p->b = p->a;
+// 		printf("sentinel %c \n", c);
 		return true;
 	}
 	else{
+// 		printf("else %c \n", c);
 		if(p->a->child == NULL)
 			return false;
-		char curr = generalizedString[(p->a->child)->Ti][p->s];
-
-		return curr == c;
-
-
-
-
+		
+		char curr = generalizedString[p->b->Ti][p->s];
+		if (curr == c){
+			p->b = p->a->child;
+			return true;
+		}
+		else{
+			Node * aux = p->a->child->brother;
+			while(aux != NULL){
+				curr = generalizedString[aux->Ti][aux->head];
+				printf("c: %c curr: %c   auxTi: %d   head: %d\n", c, curr, aux->Ti, aux->head);
+				if (curr == c){
+					p->b = aux;
+					printf("match\n");
+					return true;
+				}
+				aux = aux->brother;
+			}
+			return false;
+		}
+		
 //	// TODO UPDATE p->b
 //	printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
 // 	if ((p->a)->child == NULL){
@@ -131,23 +145,10 @@ bool DescendQ(Point *p, char c){
 // 	else{
 // 		//printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
 // 	}
-		return false;
+// 		return false;
 	}
 }
 
-Node* initNode(){
-	Node* node = malloc(sizeof(Node));
-
-	node->Ti = 0;
-	node->sdep = 0;
-	node->head = 0;
-	node->brother = NULL;
-	node->child = NULL;
-	node->hook = NULL;
-	node->slink = NULL;
-
-	return node;
-}
 Node * buildST(char* string[], int ni[],int numberOfStrings){
 	Node *root = initNode();
 	Node *sentinel = initNode();
@@ -164,8 +165,9 @@ Node * buildST(char* string[], int ni[],int numberOfStrings){
 	while(i < numberOfStrings){
 		p->s = 0;
 		int j = 0;
+		string[i][ni[i]]= '!';
+		
 		while(j <= ni[i]){
-			//DescendQ(p, string[i][j]);
 			while(!DescendQ(p, string[i][j])){
 				AddLeaf(p, i, j);
 				SuffixLink(p);
@@ -174,6 +176,7 @@ Node * buildST(char* string[], int ni[],int numberOfStrings){
 			Descend(p);
 			j++;
 		}
+		string[i][ni[i]]= '-';
 		i++;
 	}
 	return root;
