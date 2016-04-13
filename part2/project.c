@@ -5,7 +5,7 @@
 
 
 int *ni;
-char **generalizedString;
+char **Ti;
 
 
 typedef struct node {
@@ -46,7 +46,7 @@ void AddLeaf(Point *p, int i, int j){
 	node->Ti = i;
 	node->head = j;
 	node->sdep = ni[i] - j;
-	node->name = generalizedString[node->Ti];
+	node->name = Ti[node->Ti];
 	Node *ancestor = p->a;
 	if (ancestor->child == NULL){
 		ancestor->child = node;
@@ -60,29 +60,49 @@ void AddLeaf(Point *p, int i, int j){
 		ancestor->brother = node;
 		node->hook = &(ancestor->brother);
 	}
+	if (p->s != 0){
+		Node *split = initNode();
+		split->Ti = p->b->Ti;
+		split->head = p->b->head;
+		split->sdep = 0; //TODO
+		split->brother = p->b->brother;
+		split->child = p->b;
+// 		Node *aux = p->b;
+// 		while(aux->brother != NULL){
+// 			aux = aux->brother;
+// 		}
+// 		aux->brother = node;
+		p->b->brother = node;
+		p->b->head += p->s;
+		p->b->sdep -= p->s;
+		printf("SPLIT:   sdep: %d     head: %d      Ti: %d\n", split->sdep, split->head, split->Ti);
+		(*(p->b->hook)) = split;
+	}
 }
 
-void printString(Node *n, char* string[]){
+void printString(Node *n){
 	int i;
 	int index = n->head + n->sdep + 1;
 	for(i = n->head; i < index; i++){
-		printf("%c", string[n->Ti][i]);
+		printf("%c", Ti[n->Ti][i]);
 	}
+	printf(" Ti: %d   sdep: %d   head: %d name: %s", n->Ti, n->sdep, n->head, n->name);
+// 		printf(" %s ", (*(n->hook))->name);
 	printf("\n");
 	
 }
 
-void printST(Node *root, char* string[]){
+void printST(Node *root){
+	printString(root);
 	if (root->child == NULL){
-		printString(root, string);
 		if (root->brother != NULL){
-			printST(root->brother, string);
+			printST(root->brother);
 		}
 	}
 	else{
-		printST(root->child, string);
+		printST(root->child);
 		if (root->brother != NULL){
-			printST(root->brother, string);
+			printST(root->brother);
 		}
 	}
 	
@@ -117,39 +137,44 @@ bool DescendQ(Point *p, char c){
 		if(p->a->child == NULL)
 			return false;
 		
-		char curr = generalizedString[p->b->Ti][p->s];
+		char curr = Ti[p->b->Ti][p->b->head + p->s];
 		if (curr == c){
 			p->b = p->a->child;
 			return true;
 		}
 		else{
-			Node * aux = p->a->child->brother;
-			while(aux != NULL){
-				curr = generalizedString[aux->Ti][aux->head];
-				printf("c: %c curr: %c   auxTi: %d   head: %d\n", c, curr, aux->Ti, aux->head);
-				if (curr == c){
-					p->b = aux;
-					printf("match\n");
-					return true;
+			if (p->b->child != NULL){
+				Node * aux = p->b->child->brother;
+				while(aux != NULL){
+					curr = Ti[aux->Ti][aux->head];
+					printf("c: %c curr: %c   auxTi: %d   head: %d\n", c, curr, aux->Ti, aux->head);
+					if (curr == c){
+						p->b = aux;
+						printf("match\n");
+						return true;
+					}
+					aux = aux->brother;
 				}
-				aux = aux->brother;
+				return false;
 			}
-			return false;
+			else{
+				return false; //TODO
+			}
 		}
 		
 //	// TODO UPDATE p->b
-//	printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
+//	printf("c: %c\n", Ti[(p->b)->Ti][p->s]);
 // 	if ((p->a)->child == NULL){
 // 		return false;
 // 	}
 // 	else{
-// 		//printf("c: %c\n", generalizedString[(p->b)->Ti][p->s]);
+// 		//printf("c: %c\n", Ti[(p->b)->Ti][p->s]);
 // 	}
 // 		return false;
 	}
 }
 
-Node * buildST(char* string[], int ni[],int numberOfStrings){
+Node * buildST(int numberOfStrings){
 	Node *root = initNode();
 	Node *sentinel = initNode();
 	root->slink = sentinel;
@@ -165,18 +190,18 @@ Node * buildST(char* string[], int ni[],int numberOfStrings){
 	while(i < numberOfStrings){
 		p->s = 0;
 		int j = 0;
-		string[i][ni[i]]= '!';
+		Ti[i][ni[i]]= '!';
 		
 		while(j <= ni[i]){
-			while(!DescendQ(p, string[i][j])){
+			while(!DescendQ(p, Ti[i][j])){
 				AddLeaf(p, i, j);
 				SuffixLink(p);
 			}
-//			printf("c: %c %d %d\n", string[i][j], (p->a)->sdep, (p->b)->sdep);
+//			printf("c: %c %d %d\n", Ti[i][j], (p->a)->sdep, (p->b)->sdep);
 			Descend(p);
 			j++;
 		}
-		string[i][ni[i]]= '-';
+		Ti[i][ni[i]]= '-';
 		i++;
 	}
 	return root;
@@ -196,7 +221,7 @@ int main() {
 	char *line = NULL;
 	size_t sizeOfLine;
 	char* token;
-	generalizedString = (char**) malloc(sizeof(char*) * numOfLines);
+	Ti = (char**) malloc(sizeof(char*) * numOfLines);
 	ni = malloc(sizeof(int) * numOfLines);
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
@@ -209,10 +234,10 @@ int main() {
 		token = strtok(line, " ");
 		ni[i-1] = atoi(token);
 		token = strtok(NULL, " ");
-		generalizedString[i-1] = malloc(sizeof(char) * ni[i-1]);
-		strcpy(generalizedString[i-1], token);
+		Ti[i-1] = malloc(sizeof(char) * ni[i-1]);
+		strcpy(Ti[i-1], token);
 	}
-	Node * root = buildST(generalizedString, ni, numOfLines);
-	printST(root, generalizedString);
+	Node * root = buildST(numOfLines);
+	printST(root);
 	return 0;
 }
