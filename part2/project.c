@@ -47,6 +47,7 @@ void AddLeaf(Point *p, int i, int j){
 	node->head = j;
 	node->sdep = ni[i] - j;
 	node->name = Ti[node->Ti];
+// 	printf("namea: %s    sdepa: %d  nameb: %s    sdepb: %d\n", p->a->name, p->a->sdep, p->b->name, p->b->sdep);
 	Node *ancestor = p->a;
 	if (ancestor->child == NULL){
 		ancestor->child = node;
@@ -60,7 +61,25 @@ void AddLeaf(Point *p, int i, int j){
 		ancestor->brother = node;
 		node->hook = &(ancestor->brother);
 	}
-	if (p->s != 0){
+	/*if (p->a->child == p->b){
+		Node *split = initNode();
+		split->Ti = p->b->Ti;
+		split->head = p->b->head;
+		split->sdep = 0; //TODO
+		split->child = p->b;
+		split->brother = p->b->brother;
+		p->a->child = split;
+		p->b->head += p->s;
+		p->b->sdep -= p->s;
+		(*(p->b->hook)) = split;
+		Node *aux = initNode();
+		aux->Ti = i;
+		aux->head = j;
+		aux->sdep = ni[i] - j;
+		aux->name = Ti[aux->Ti];
+		p->b->brother = aux;
+	}*/
+	if(p->s != 0){
 		Node *split = initNode();
 		split->Ti = p->b->Ti;
 		split->head = p->b->head;
@@ -72,21 +91,28 @@ void AddLeaf(Point *p, int i, int j){
 // 			aux = aux->brother;
 // 		}
 // 		aux->brother = node;
-		p->b->brother = node;
+		
 		p->b->head += p->s;
 		p->b->sdep -= p->s;
-		printf("SPLIT:   sdep: %d     head: %d      Ti: %d\n", split->sdep, split->head, split->Ti);
+// 		printf("SPLIT:   sdep: %d     head: %d      Ti: %d  nameA: %s    nameB: %s   sdep: %d\n", split->sdep, split->head, split->Ti, p->a->name, p->b->name, p->b->sdep);
 		(*(p->b->hook)) = split;
+		Node *aux = initNode();
+		aux->Ti = i;
+		aux->head = j;
+		aux->sdep = ni[i] - j;
+		aux->name = Ti[aux->Ti];
+		p->b->brother = aux;
 	}
 }
 
 void printString(Node *n){
 	int i;
 	int index = n->head + n->sdep + 1;
+// 	printf("n->head: %d    index: %d\n", n->head, index);
 	for(i = n->head; i < index; i++){
 		printf("%c", Ti[n->Ti][i]);
 	}
-	printf(" Ti: %d   sdep: %d   head: %d name: %s", n->Ti, n->sdep, n->head, n->name);
+// 	printf(" Ti: %d   sdep: %d   head: %d name: %s", n->Ti, n->sdep, n->head, n->name);
 // 		printf(" %s ", (*(n->hook))->name);
 	printf("\n");
 	
@@ -134,9 +160,9 @@ bool DescendQ(Point *p, char c){
 	}
 	else{
 // 		printf("else %c \n", c);
-		if(p->a->child == NULL)
+		if(p->a->child == NULL){
 			return false;
-		
+		}
 		char curr = Ti[p->b->Ti][p->b->head + p->s];
 		if (curr == c){
 			p->b = p->a->child;
@@ -147,10 +173,10 @@ bool DescendQ(Point *p, char c){
 				Node * aux = p->b->child->brother;
 				while(aux != NULL){
 					curr = Ti[aux->Ti][aux->head];
-					printf("c: %c curr: %c   auxTi: %d   head: %d\n", c, curr, aux->Ti, aux->head);
+// 					printf("c: %c curr: %c   auxTi: %d   head: %d\n", c, curr, aux->Ti, aux->head);
 					if (curr == c){
 						p->b = aux;
-						printf("match\n");
+// 						printf("match\n");
 						return true;
 					}
 					aux = aux->brother;
@@ -190,18 +216,21 @@ Node * buildST(int numberOfStrings){
 	while(i < numberOfStrings){
 		p->s = 0;
 		int j = 0;
-		Ti[i][ni[i]]= '!';
-		
+		if (i == 0){
+			Ti[i][ni[i]]= '!';
+		}
+		else if (i == 1){
+			Ti[i][ni[i]]= '$';
+		}
 		while(j <= ni[i]){
 			while(!DescendQ(p, Ti[i][j])){
 				AddLeaf(p, i, j);
 				SuffixLink(p);
 			}
-//			printf("c: %c %d %d\n", Ti[i][j], (p->a)->sdep, (p->b)->sdep);
 			Descend(p);
 			j++;
 		}
-		Ti[i][ni[i]]= '-';
+// 		Ti[i][ni[i]]= '-';
 		i++;
 	}
 	return root;
@@ -225,19 +254,17 @@ int main() {
 	ni = malloc(sizeof(int) * numOfLines);
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
-		int lineSize = strlen(line);
-		if (i != numOfLines) {
-			line[lineSize - 1] = '-'; //all strings have '\n' in the end beside the last
-		} else {
-			line[lineSize] = '-'; // last string doesnt have '\n'
-		}
 		token = strtok(line, " ");
 		ni[i-1] = atoi(token);
 		token = strtok(NULL, " ");
-		Ti[i-1] = malloc(sizeof(char) * ni[i-1]);
-		strcpy(Ti[i-1], token);
+		token[ni[i-1]] = '-'; //all strings have '\n' in the end beside the last
+		if (i == numOfLines) {
+			token[ni[i-1] + 1] = '\0'; // last string doesnt have '\n'
+		}
+// 		Ti[i-1] = malloc(sizeof(char) * (ni[i-1] + 1));
+		Ti[i-1] = strdup(token);
 	}
 	Node * root = buildST(numOfLines);
-	printST(root);
+	printST(root->child);
 	return 0;
 }
