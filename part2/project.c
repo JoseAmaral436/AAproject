@@ -4,8 +4,6 @@
 #include <stdbool.h>
 
 
-int *ni;
-char **Ti;
 
 
 typedef struct node {
@@ -19,11 +17,21 @@ typedef struct node {
 	char* name;
 } Node;
 
+
 typedef struct point {
 	Node *a; /**< node above */
 	Node *b; /**< node bellow */
 	int s; /**< String-Depth */
 } Point;
+
+
+
+
+int *ni;
+char **Ti;
+Node **previouslyAdded;
+
+
 
 
 Node* initNode(){
@@ -47,7 +55,7 @@ void AddLeaf(Point *p, int i, int j){
 	node->head = j;
 	node->sdep = ni[i] - j;
 	node->name = Ti[node->Ti];
-// 	printf("namea: %s    sdepa: %d  nameb: %s    sdepb: %d\n", p->a->name, p->a->sdep, p->b->name, p->b->sdep);
+	printf("namea: %s    sdepa: %d  nameb: %s    sdepb: %d   ps: %d\n", p->a->name, p->a->sdep, p->b->name, p->b->sdep, p->s);
 	Node *ancestor = p->a;
 	if (ancestor->child == NULL){
 		ancestor->child = node;
@@ -60,6 +68,13 @@ void AddLeaf(Point *p, int i, int j){
 		}
 		ancestor->brother = node;
 		node->hook = &(ancestor->brother);
+	}
+	if (i == 0 && j == 0){
+		previouslyAdded[1] = node;
+	}
+	else {
+		previouslyAdded[0] = previouslyAdded[1];
+		previouslyAdded[1] = node;
 	}
 	/*if (p->a->child == p->b){
 		Node *split = initNode();
@@ -94,7 +109,7 @@ void AddLeaf(Point *p, int i, int j){
 		
 		p->b->head += p->s;
 		p->b->sdep -= p->s;
-// 		printf("SPLIT:   sdep: %d     head: %d      Ti: %d  nameA: %s    nameB: %s   sdep: %d\n", split->sdep, split->head, split->Ti, p->a->name, p->b->name, p->b->sdep);
+		printf("SPLIT:   sdep: %d     head: %d      Ti: %d  nameA: %s    nameB: %s   sdep: %d\n", split->sdep, split->head, split->Ti, p->a->name, p->b->name, p->b->sdep);
 		(*(p->b->hook)) = split;
 		Node *aux = initNode();
 		aux->Ti = i;
@@ -102,6 +117,8 @@ void AddLeaf(Point *p, int i, int j){
 		aux->sdep = ni[i] - j;
 		aux->name = Ti[aux->Ti];
 		p->b->brother = aux;
+		previouslyAdded[0] = previouslyAdded[1];
+		previouslyAdded[1] = split;
 	}
 }
 
@@ -136,6 +153,10 @@ void printST(Node *root){
 
 
 void SuffixLink(Point *p){
+	if (p->s != 0){ // if not at start of string AKA if in internal node
+		printf("0: %s     1: %s\n",previouslyAdded[0]->name, previouslyAdded[1]->name);
+		previouslyAdded[0]->slink = previouslyAdded[1];
+	}
 	p->a = (p->a)->slink;
 	p->b = p->a;
 	p->s = (p->a)->sdep;
@@ -224,6 +245,7 @@ Node * buildST(int numberOfStrings){
 		}
 		while(j <= ni[i]){
 			while(!DescendQ(p, Ti[i][j])){
+				printf("%d IM IN\n", j);
 				AddLeaf(p, i, j);
 				SuffixLink(p);
 			}
@@ -251,7 +273,10 @@ int main() {
 	size_t sizeOfLine;
 	char* token;
 	Ti = (char**) malloc(sizeof(char*) * numOfLines);
-	ni = malloc(sizeof(int) * numOfLines);
+	ni = (int *)malloc(sizeof(int) * numOfLines);
+	previouslyAdded = (Node **)malloc(sizeof(Node *) * 2);
+	previouslyAdded[0] = (Node *)malloc(sizeof(Node));
+	previouslyAdded[1] = (Node *)malloc(sizeof(Node));
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
 		token = strtok(line, " ");
