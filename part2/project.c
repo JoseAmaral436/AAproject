@@ -53,7 +53,7 @@ Node* initNode(){
 void printString(Node *n){
 	int i;
 	int index = n->head + n->sdep;
-// 	printf("node %d ->  ", n->id);
+	printf("node %d ->  ", n->id);
 // 	if (n->child != NULL){
 // 		printf("child %d ->  ", n->child->id);
 // 	}
@@ -110,13 +110,19 @@ void AddLeaf(Point *p, int i, int j){
 			ancestor->brother = node;
 			node->hook = &(ancestor->brother);
 		}
-		if (i == 0 && j == 0){
-			previouslyAdded[1] = node;
+		if ((ancestor != root) && (node->sdep != 1)){
+			ancestor->slink = node;
 		}
-		else {
-			previouslyAdded[0] = previouslyAdded[1];
-			previouslyAdded[1] = node;
+		if (node->sdep - 1 == 1){
+			node->slink = root;
 		}
+// 		if (i == 0 && j == 0){
+// 			previouslyAdded[1] = node;
+// 		}
+// 		else {
+// 			previouslyAdded[0] = previouslyAdded[1];
+// 			previouslyAdded[1] = node;
+// 		}
 	}
 	
 	/*if (p->a->child == p->b){
@@ -166,13 +172,13 @@ void AddLeaf(Point *p, int i, int j){
 		aux->name = Ti[aux->Ti];
 		p->b->brother = aux;
 // 		printf("SPLIT aux:  %d   p->b->id: %d    p->b->brother->id: %d \n", aux->id ,p->b->id, p->b->brother->id);
-		previouslyAdded[0] = previouslyAdded[1];
+// 		previouslyAdded[0] = previouslyAdded[1];
 // 		if (p->s == 1){
 // 			previouslyAdded[0] = root;
 // 			printf("pAdd0: %d   ", previouslyAdded[0]->id);
 // 			printf("pAdd1: %d\n", previouslyAdded[1]->id);
 // 		}
-		previouslyAdded[1] = split;
+// 		previouslyAdded[1] = split;
 		
 	}
 }
@@ -183,11 +189,11 @@ void AddLeaf(Point *p, int i, int j){
 void SuffixLink(Point *p){
 	if (p->s != 0){ // if not at start of string AKA if in internal node
 // 		printf("##################0: %d     1: %d\n",previouslyAdded[0]->id, previouslyAdded[1]->id);
-		previouslyAdded[1]->slink = previouslyAdded[0];
-		if (p->s == 1){
-			previouslyAdded[1]->slink = root;
-		}
-		p->a = previouslyAdded[1]->slink;
+// 		previouslyAdded[1]->slink = previouslyAdded[0];
+// 		if (p->s == 1){
+// 			previouslyAdded[1]->slink = root;
+// 		}
+		p->a = p->b->slink;
 		p->b = p->a;
 		p->s -= 1;
 	}
@@ -304,6 +310,10 @@ Node * buildST(int numberOfStrings){
 // 				}
 				AddLeaf(p, i, j);
 				SuffixLink(p);
+				if (j != 0){
+					printST(root->child);
+					printf("---------------------\n");
+				}
 // 				printf("|||||||||||||||||||||DEPOIS|||||||||||||||||||\n");
 // 				printf("---- p->aID: %d ----  p->bID: %d  ------  p->s: %d  ------\n", p->a->id, p->b->id, p->s);
 // 				printST(root->child);
