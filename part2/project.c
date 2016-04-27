@@ -167,6 +167,7 @@ void AddLeaf(Point *p, int i, int j){
 		p->b->sdep -= p->s;
 // 		printf("p->b: %d   split: %d   (*(p->b->hook))->id: %d\n", p->b->id, split->id, (*(p->b->hook))->id);
 		(*(p->b->hook)) = split;
+		split->slink = root;
 		Node *aux = initNode();
 		aux->Ti = i;
 		aux->head = j;
@@ -207,25 +208,30 @@ void SuffixLink(Point *p){
 		p->a = p->b->slink;
 		p->b = p->a;
 		p->s -= 1;
+// 		printf("PS!=0   %d  FOLLOWED SUFFIX LINK\n", p->s);
 	}
 	else{
-// 		printf("aName: %s\n", p->a->name);
 		p->a = (p->a)->slink;
 		p->b = p->a;
 		p->s = (p->a)->sdep;
+// 		printf("PS==0   %d  FOLLOWED SUFFIX LINK\n", p->s);
 	}
 }
 
 
 void Descend(Point *p){
-	if (p->s == (p->b)->sdep){
-		p->a = p->b;
-	}
 	p->s += 1;
+	if (p->s == (p->b)->sdep){
+// 		printf("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$DESCEND SPESHUL\n");
+		p->a = p->b;
+		p->s = 0;
+	}
+	printf("DESCEND\n");
 }
 
 
 bool DescendQ(Point *p, char c){
+	printf("c: %c\n", c);
 	char curr;
 	if ((p->a)->sdep == -1){ // Testing if pointing to sentinel
 		p->a = p->a->child;
@@ -320,10 +326,10 @@ Node * buildST(int numberOfStrings){
 // 				}
 				AddLeaf(p, i, j);
 				SuffixLink(p);
-// 				if (j != 0){
-// 					printST(root->child);
-// 					printf("---------------------\n");
-// 				}
+				if (j != 0){
+					printST(root->child);
+					printf("---------------------\n");
+				}
 // 				printf("|||||||||||||||||||||DEPOIS|||||||||||||||||||\n");
 // 				printf("---- p->aID: %d ----  p->bID: %d  ------  p->s: %d  ------\n", p->a->id, p->b->id, p->s);
 // 				printST(root->child);
