@@ -30,7 +30,7 @@ typedef struct point {
 
 int *ni;
 char **Ti;
-Node **previouslyAdded;
+Node *previouslyAdded;
 int id = 0;
 Node *root;
 
@@ -90,6 +90,8 @@ void printST(Node *root){
 }
 
 void AddLeaf(Point *p, int i, int j){
+// 	printf("%d\n", (p->a)->id);
+// 	printf("ps: %d\n",p->s);
 	if (p->s == 0){
 		Node *node = initNode();
 		node->Ti = i;
@@ -180,6 +182,15 @@ void AddLeaf(Point *p, int i, int j){
 // 		}
 // 		previouslyAdded[1] = split;
 		
+		if (p->s == 1){
+			p->b->slink = root;
+// 			p->b->slink = previouslyAdded;
+// 			previouslyAdded->slink = aux;
+		}
+// 		previouslyAdded = aux;
+// 		if (aux->sdep - 1 == 1){
+// 			aux->slink = root;
+// 		}
 	}
 }
 
@@ -215,7 +226,6 @@ void Descend(Point *p){
 
 
 bool DescendQ(Point *p, char c){
-//	printf("%d\n", (p->a)->sdep);
 	char curr;
 	if ((p->a)->sdep == -1){ // Testing if pointing to sentinel
 		p->a = p->a->child;
@@ -293,15 +303,15 @@ Node * buildST(int numberOfStrings){
 	while(i < numberOfStrings){
 		p->s = 0;
 		int j = 0;
-		if (i == 0){
-			Ti[i][ni[i]]= '!';
-		}
-		else if (i == 1){
-			Ti[i][ni[i]]= '$';
-		}
+		Ti[i][ni[i]]= '!';
+// 		if (i == 0){
+// 			Ti[i][ni[i]]= '!';
+// 		}
+// 		else if (i == 1){
+// 			Ti[i][ni[i]]= '$';
+// 		}
 		while(j <= ni[i]){
 			while(!DescendQ(p, Ti[i][j])){
-// 				printf("%d IM IN\n", j);
 // 				if (j != 0){
 // 					printf("|||||||||||||||||||||ANTES|||||||||||||||||||\n");
 // 					printf("---- p->aID: %d ----  p->bID: %d  ------  p->s: %d  ------\n", p->a->id, p->b->id, p->s);
@@ -310,10 +320,10 @@ Node * buildST(int numberOfStrings){
 // 				}
 				AddLeaf(p, i, j);
 				SuffixLink(p);
-				if (j != 0){
-					printST(root->child);
-					printf("---------------------\n");
-				}
+// 				if (j != 0){
+// 					printST(root->child);
+// 					printf("---------------------\n");
+// 				}
 // 				printf("|||||||||||||||||||||DEPOIS|||||||||||||||||||\n");
 // 				printf("---- p->aID: %d ----  p->bID: %d  ------  p->s: %d  ------\n", p->a->id, p->b->id, p->s);
 // 				printST(root->child);
@@ -323,7 +333,7 @@ Node * buildST(int numberOfStrings){
 			Descend(p);
 			j++;
 		}
-// 		Ti[i][ni[i]]= '-';
+		Ti[i][ni[i]]= '-';
 		i++;
 	}
 	return root;
@@ -345,9 +355,7 @@ int main() {
 	char* token;
 	Ti = (char**) malloc(sizeof(char*) * numOfLines);
 	ni = (int *)malloc(sizeof(int) * numOfLines);
-	previouslyAdded = (Node **)malloc(sizeof(Node *) * 2);
-	previouslyAdded[0] = (Node *)malloc(sizeof(Node));
-	previouslyAdded[1] = (Node *)malloc(sizeof(Node));
+	previouslyAdded = (Node *)malloc(sizeof(Node ));
 	for (i = 1; i <= numOfLines; i++) {
 		getline(&line, &sizeOfLine, stdin);
 		token = strtok(line, " ");
