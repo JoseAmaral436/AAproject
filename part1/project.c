@@ -1,3 +1,4 @@
+//http://opendatastructures.org/ods-java/7_2_Treap_Randomized_Binary.html
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
