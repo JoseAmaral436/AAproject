@@ -1,7 +1,7 @@
 CC=gcc 
 CFLAGS= -g -Wall
 
-all: project
+all: clean project run
 
 project.o: project.c
 	$(CC) -c $(CFLAGS) $<

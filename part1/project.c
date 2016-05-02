@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <linux/random.h>
+#include <stdint.h>
 
 typedef struct info {
 	int numOfOcc;
-	char *label;
+	char *key;
+	int priority;
 } Info;
 
 typedef struct node {
@@ -19,7 +22,7 @@ static int compar(const void *pa, const void *pb) {
 	Info * la = (Info *) ((Node *) pa)->value;
 	Info * lb = (Info *) ((Node *) pb)->value;
 	
-	return strcmp(la->label, lb->label);
+	return strcmp(la->key, lb->key);
 }
 
 void *tsearch(const void *key, void **rootp,
@@ -175,31 +178,45 @@ void * tdelete(const void *key, void **rootp,
 					curr = NULL;
 				} else { // 2 CHILDREN 
 					Node *minParent = curr;
+// 					printf("!!!!%s\n", ((Info *)(((Node *)minParent)->value))->key);
 					Node *min = curr->right;
 					while (min->left != NULL) {
 					  minParent = min;
 					  min = min->left;
 					}
-					//printf("min  :%s\n", ((Info *)(((Node *)min)->value))->label);
+					//printf("min  :%s\n", ((Info *)(((Node *)min)->value))->key);
 					if (curr == *rootp){
-					  *rootp = min;
-					  min->right = curr->right;
-					  min->left = curr->left;
+						*rootp = min;
+						if (curr->right == min){
+							min->left = curr->left;
+						}
+					  else{
+							min->right = curr->right;
+							min->left = curr->left;
+							minParent->left = NULL;
+						}
+// 						printf("min  :%s\n", ((Info *)(((Node *)min)->value))->key);
+// 						printf("curr  :%s\n", ((Info *)(((Node *)curr)->value))->key);
+// 						printf("minParent  :%s\n", ((Info *)(((Node *)minParent)->value))->key);
+// 						break;
 					}
 					else if (curr->right == min){
+						min->left = curr->left;
 					  if (parentage == 0) {
 					    parent->left = min;
-					    min->left = curr->left;
 					  } else if (parentage == 1) {
 					    parent->right = min;
-					    min->left = curr->left;
 					  }
-
 					}
 					else{
-					  min->right = curr->right;
-					  curr = min;
-					  minParent->left = NULL;
+						min->right = curr->right;
+						min->left = curr->left;
+						minParent->left = NULL;
+						if (parentage == 0) {
+							parent->left = min;
+					  } else if (parentage == 1) {
+							parent->right = min;
+					  }
 					}
 				}
 				return parent; // RETURN PARENT of deleted node
@@ -210,11 +227,19 @@ void * tdelete(const void *key, void **rootp,
 
 void clean(Node * node){
   if (node != NULL){
-    free(((Info *)(node->value))->label);
+    free(((Info *)(node->value))->key);
     free((void *)node->value);
     clean(node->left);
     clean(node->right);
     free(node);
+  }
+}
+
+void printTree(Node * node){
+  if (node != NULL){
+    printf("%s\n", ((Info*) (node->value))->key);
+		printTree(node->left);
+		printTree(node->right);
   }
 }
 
@@ -248,12 +273,12 @@ int main() {
 			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
 			memmove(line, line + 1, strlen(line));
 			Info * info = malloc(sizeof(Info));
-			info->label = malloc(sizeof(line));
+			info->key = malloc(sizeof(line));
 			info->numOfOcc = 0;
-			strcpy(info->label, line);
+			strcpy(info->key, line);
 			result = tsearch(info, &root, compar);
 			if (((Info*) (result->value))->numOfOcc != 0){
-			  free(info->label);
+			  free(info->key);
 			  free(info);
 			}
 			((Info*) (result->value))->numOfOcc++;
@@ -262,36 +287,43 @@ int main() {
 		case 'F':
 			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
 			memmove(line, line + 1, strlen(line));
-			find->label = malloc(sizeof(line)); 
-			strcpy(find->label, line); 
+			find->key = malloc(sizeof(line)); 
+			strcpy(find->key, line); 
 			result = tfind(find, &root, compar);
 			if (result == NULL) {
 				printf("NULL\n");
 			} else {
 				printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
 			}
-			free(find->label);
+			free(find->key);
 			break;
 		case 'D':
 			memmove(line, line + 1, strlen(line));
 			memmove(line, line + 1, strlen(line));
-			find->label = malloc(sizeof(line)); 
-			strcpy(find->label, line);
+			find->key = malloc(sizeof(line)); 
+			strcpy(find->key, line);
 			Node *toDelete = tfind(find, &root, compar); // CAN WE USE FIND IN CASE D ?
 			if (toDelete == NULL) {
 				printf("NULL\n");
-				free(find->label);
+				free(find->key);
 			} else {
 				printf("%d\n", ((Info *) ((Node *) toDelete)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
 				result = tdelete(find, &root, compar);
-				free(((Info *) ((Node *) toDelete)->value)->label);
+				free(((Info *) ((Node *) toDelete)->value)->key);
 				free(((void *)((Node *) toDelete)->value));
 				free(toDelete);
-				free(find->label);
+				free(find->key);
 			}
 			break;
 		}
 	}
+	uint16_t randval;
+  FILE *f;
+  f = fopen("/dev/random", "r");
+  fread(&randval, sizeof(randval), 1, f);
+  fclose(f);
+  printf("%u\n", randval);
+// 	printTree(root);
 	clean(root);
 	free(line);
 	free(find);
