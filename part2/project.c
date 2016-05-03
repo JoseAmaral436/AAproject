@@ -34,8 +34,6 @@ int id = 0;
 Node *root;
 Node *previouslyNode;
 Node *previouslySplit;
-int descendedNodes = 0;
-int descendedNodes2 = 0;
 
 Node* initNode(){
 	Node* node = malloc(sizeof(Node));
@@ -97,7 +95,7 @@ void printST(Node *root){
 void AddLeaf(Point *p, int i, int j){
 	printf("pa: %d   pb: %d\n", (p->a)->id, (p->b)->id);
 // 	printf("ps: %d\n",p->s);
-	if (p->s == 0){
+	if (p->s - p->b->head == 0){
 		Node *node = initNode();
 		node->Ti = i;
 		node->head = j;
@@ -155,7 +153,7 @@ void AddLeaf(Point *p, int i, int j){
 		Node *split = initNode();
 		split->Ti = p->b->Ti;
 		split->head = p->b->head;
-		split->sdep = p->s;
+		split->sdep = p->s - p->b->head;
 		if (p->b->brother != NULL){
 			split->brother = p->b->brother;
 			split->brother->hook = &(split->brother);
@@ -169,8 +167,8 @@ void AddLeaf(Point *p, int i, int j){
 // 		}
 // 		aux->brother = node;
 		
-		p->b->head += p->s;
-		p->b->sdep -= p->s;
+		p->b->head = p->b->head + p->s - p->b->head;
+		p->b->sdep = p->b->sdep + p->s - p->b->head;
 // 		printf("p->b: %d   split: %d   (*(p->b->hook))->id: %d\n", p->b->id, split->id, (*(p->b->hook))->id);
 // 		printf("!!!!!!!!!!!!!!rootchildid: %d\n", root->child->id);
 // 		printf("pbid: %d   pbhookid: %d\n", p->b->id, (*(p->b->hook))->id);
@@ -206,7 +204,7 @@ void AddLeaf(Point *p, int i, int j){
 // 		if (aux->sdep - 1 == 1){
 // 			aux->slink = root;
 // 		}
-		if (previouslySplit != NULL){
+		if (previouslySplit != NULL && previouslySplit->sdep != 1){
 			previouslySplit->slink = split;
 		}
 		previouslySplit = split;
@@ -219,45 +217,18 @@ void AddLeaf(Point *p, int i, int j){
 
 
 void SuffixLink(Point *p){
-	if (p->s != 0){ // if not at start of string AKA if in internal node
-// 		printf("##################0: %d     1: %d\n",previouslyAdded[0]->id, previouslyAdded[1]->id);
-// 		previouslyAdded[1]->slink = previouslyAdded[0];
-// 		if (p->s == 1){
-// 			previouslyAdded[1]->slink = root;
-// 		}
-		if (p->s == 1){
-			p->a = root;
-			p->b = p->a;
-			if (descendedNodes != 0){
-				descendedNodes--;
-			}
-			else{
-				p->s--;
-				p->s -= descendedNodes2;// = 0;
-			}
-		}
-		else{
-			p->a = p->b->slink;
-			p->b = p->a;
-			if (descendedNodes != 0){
-				descendedNodes--;
-			}
-			else{
-				p->s--;
-				p->s -= descendedNodes2;// = 0;
-			}
-		}
-		
-// 		printf("PS!=0   %d  FOLLOWED SUFFIX LINK\n", p->s);
-	}
-	else{
+// 	if (p->s != 0){ // if not at start of string AKA if in internal node
+// 		p->a = p->a->slink;
+// 		p->b = p->a;
+// 		p->s--;
+// 	}
+// 	else{
 		p->a = (p->a)->slink;
 		p->b = p->a;
-		p->s = (p->a)->sdep;
-		descendedNodes = 0;
-		descendedNodes2 = 0;
+		p->s--;
+// 		p->s = (p->a)->sdep;
 // 		printf("PS==0   %d  FOLLOWED SUFFIX LINK\n", p->s);
-	}
+// 	}
 }
 
 
@@ -269,11 +240,6 @@ void Descend(Point *p){
 		p->a = p->b;
 		if (p->a->child != NULL){
 			p->b = p->a->child;
-		}
-		p->s = 0;
-		if (p->a->id != 0){
-			descendedNodes++; // TODO
-			descendedNodes2++;
 		}
 	}
 	printf("DESCEND\n");
@@ -295,7 +261,8 @@ bool DescendQ(Point *p, char c){
 			if(p->a->child == NULL){
 				return false;
 			}
-			curr = Ti[p->b->Ti][p->b->head + p->s];
+// 			curr = Ti[p->b->Ti][p->b->head + p->s];
+			curr = Ti[p->b->Ti][p->s];
 			printf("curr1: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
 			if (curr == c){
 				p->b = p->a->child;
@@ -317,7 +284,8 @@ bool DescendQ(Point *p, char c){
 			}
 		}
 		else{
-			curr = Ti[p->b->Ti][p->b->head + p->s];
+// 			curr = Ti[p->b->Ti][p->b->head + p->s];
+			curr = Ti[p->b->Ti][p->s];
 			printf("curr2: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
 			return curr == c;
 		}

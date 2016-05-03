@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <linux/random.h>
 
 typedef struct info {
 	int numOfOcc;
@@ -26,12 +27,12 @@ int compareKeys(const void *pa, const void *pb) {
 	return strcmp(la->key, lb->key);
 }
 
- int comparePriorities(const void *pa, const void *pb) {
- 	Info * la = (Info *) ((Node *) pa)->value;
- 	Info * lb = (Info *) ((Node *) pb)->value;
+int comparePriorities(const void *pa, const void *pb) {
+ Info * la = (Info *) ((Node *) pa)->value;
+ Info * lb = (Info *) ((Node *) pb)->value;
 
- 	return la->priority < lb->priority;
- }
+ return la->priority < lb->priority;
+}
 
 void *tsearch(const void *key, void **rootp,
 		int (*compar)(const void *, const void *)) {
@@ -376,8 +377,8 @@ void clean(Node * node) {
 
 int main() {
 
-	// 	unsigned int randval;
-	uint16_t seed;
+	int seed;
+// 	uint16_t seed;
 	FILE *f;
 	f = fopen("/dev/urandom", "r");
 	fread(&seed, sizeof(seed), 1, f);
@@ -394,17 +395,17 @@ int main() {
 	} else {
 		numOfLines = atoi(number);
 	}
-	int priorities[numOfLines];
-	if (getline(&number, &size, stdin) == -1) {
-		printf("No priorities\n");
-	} else {
-		printf("Priorities\n");
-	}
+// 	int priorities[numOfLines];
+// 	if (getline(&number, &size, stdin) == -1) {
+// 		printf("No priorities\n");
+// 	} else {
+// 		printf("Priorities\n");
+// 	}
 	int i;
-	priorities[0] = atoi(strtok(number, " "));
-	for (i = 1; i < numOfLines; i++) {
-		priorities[i] = atoi(strtok(NULL, " "));
-	}
+// 	priorities[0] = atoi(strtok(number, " "));
+// 	for (i = 1; i < numOfLines; i++) {
+// 		priorities[i] = atoi(strtok(NULL, " "));
+// 	}
 	free(number);
 	char *line = NULL;
 	size_t sizeOfLine;
@@ -425,8 +426,8 @@ int main() {
 			Info * info = malloc(sizeof(Info));
 			info->key = malloc(sizeof(line));
 			info->numOfOcc = 0;
-// 			info->priority = rand();
-			info->priority = priorities[i - 1];
+			info->priority = rand();
+// 			info->priority = priorities[i - 1];
 			strcpy(info->key, line);
 			result = tsearch(info, &root, compareKeys);
 			if (((Info*) (result->value))->numOfOcc != 0) { // this key already exists
@@ -434,7 +435,7 @@ int main() {
 				free(info);
 			} else { // new key (need to test heap property)
 				while (result->parent != NULL
-						&& comparePriorities(result->parent, result) > 0) {
+						&& comparePriorities(result->parent, result)) {
 					if (result->parent->right == result) {
 						rotateLeft(result->parent);
 					} else {
@@ -472,6 +473,23 @@ int main() {
 				free(find->key);
 			} else {
 				printf("%d\n", ((Info *) ((Node *) toDelete)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
+				while(toDelete->left != NULL || toDelete->right != NULL){
+					if (toDelete->left == NULL){
+						rotateLeft(toDelete);
+					}
+					else if (toDelete->right == NULL){
+						rotateRight(toDelete);
+					}
+					else if (comparePriorities(toDelete->right, toDelete->left)){
+						rotateRight(toDelete);
+					}
+					else{
+						rotateLeft(toDelete);
+					}
+					if (toDelete == root){
+						root = toDelete->parent;
+					}
+				}
 				result = tdelete(find, &root, compareKeys);
 				free(((Info *) ((Node *) toDelete)->value)->key);
 				free(((void *) ((Node *) toDelete)->value));
