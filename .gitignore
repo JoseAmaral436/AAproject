@@ -1,5 +1,6 @@
 *.o
 project
+hexagenerator
 in 
 .cproject
 .settings

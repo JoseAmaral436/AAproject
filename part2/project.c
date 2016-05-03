@@ -90,7 +90,6 @@ void printST(Node *root){
 			printST(root->brother);
 		}
 	}
-	
 }
 
 void AddLeaf(Point *p, int i, int jj){
@@ -383,6 +382,27 @@ void clean(Node * node){
   }
 }
 
+
+void DFS(Node *node){
+	if (node->child == NULL){
+		if (node->brother != NULL){
+// 			printf("BROTHER\n");
+			DFS(node->brother);
+		}
+		//TODO Update leaves with Ti
+	}
+	else{
+// 		printf("CHILD\n");
+		DFS(node->child);
+		//TODO Merge 
+		if (node->brother != NULL){
+// 			printf("BROTHER\n");
+			DFS(node->brother);
+		}
+	}
+}
+
+
 int main() {
 	int numOfLines = 0;
 	char *number = NULL;
@@ -413,6 +433,7 @@ int main() {
 	}
 	root = buildST(numOfLines);
 	printST(root->child);
+	DFS(root);
 	clean(root);
 	free(line);
 	for (i = 0; i < numOfLines; i++) {
