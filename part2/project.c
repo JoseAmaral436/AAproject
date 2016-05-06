@@ -34,7 +34,6 @@ int id = 0;
 Node *root = NULL;
 Node *previouslyNode = NULL;
 Node *previouslySplit = NULL;
-int j;
 
 Node* initNode(){
 	Node* node = malloc(sizeof(Node));
@@ -53,8 +52,7 @@ Node* initNode(){
 
 void printString(Node *n){
 	int i;
-	int index = n->head + n->sdep;
-	printf("node %d [%d, %d] ", n->id, n->head, index - 1);
+	printf("node %d [%d, %d] ", n->id, n->head, n->sdep);
 	if (n->slink != NULL){
 		printf("slink %d -> ", n->slink->id);
 	}
@@ -65,7 +63,7 @@ void printString(Node *n){
 // 		printf("brother %d ->  ", n->brother->id);
 // 	}
 // 	printf("n->head: %d    index: %d\n", n->head, index);
-	for(i = n->head; i < index; i++){
+	for(i = n->head; i < n->sdep; i++){
 		printf("%c", Ti[n->Ti][i]);
 	}
 // 	printf(" Ti: %d   sdep: %d   head: %d name: %s", n->Ti, n->sdep, n->head, n->name);
@@ -92,14 +90,15 @@ void printST(Node *root){
 	}
 }
 
-void AddLeaf(Point *p, int i, int jj){
-// 	printf("pa: %d   pb: %d\n", (p->a)->id, (p->b)->id);
-// 	printf("ps: %d\n",p->s);
-	if (p->s == 0){
+void AddLeaf(Point *p, int i, int j){
+// 	printf("AddLeaf pa: %d   pb: %d\n", (p->a)->id, (p->b)->id);
+// 	printf("AddLeaf ps: %d   p->b->head: %d\n", p->s, p->b->head);
+	if ((p->s - p->b->sdep) == 0){
+// 		printf("AddLeaf NORMAL\n");
 		Node *node = initNode();
 		node->Ti = i;
-		node->head = jj;
-		node->sdep = ni[i] - jj + 1;
+		node->head = j - p->a->sdep;
+		node->sdep = ni[i] + 1;
 		node->name = Ti[node->Ti];
 	// 	printf("namea: %s    sdepa: %d  nameb: %s    sdepb: %d   ps: %d\n", p->a->name, p->a->sdep, p->b->name, p->b->sdep, p->s);
 		Node *ancestor = p->a;
@@ -129,6 +128,7 @@ void AddLeaf(Point *p, int i, int jj){
 // 			previouslyAdded[1] = node;
 // 		}
 		previouslyNode = node;
+		p->b = node;
 	}
 	
 	/*if (p->a->child == p->b){
@@ -150,13 +150,11 @@ void AddLeaf(Point *p, int i, int jj){
 		p->b->brother = aux;
 	}*/
 	else{
+// 		printf("AddLeaf SPLIT\n");
 		Node *split = initNode();
 		split->Ti = p->b->Ti;
 		split->head = p->b->head;
-		split->sdep = p->s;
-// 		printf ("antes: j: %d\n", j);
-		j -= split->sdep;
-// 		printf ("depois: j: %d  splitsdep: %d\n", j, split->sdep);
+		split->sdep = p->s + p->b->head;
 		if (p->b->brother != NULL){
 			split->brother = p->b->brother;
 			split->brother->hook = &(split->brother);
@@ -170,8 +168,8 @@ void AddLeaf(Point *p, int i, int jj){
 // 		}
 // 		aux->brother = node;
 		
-		p->b->head = p->b->head + p->s;
-		p->b->sdep = p->b->sdep - p->s;
+// 		p->b->head = p->s;
+// 		p->b->sdep = p->b->sdep - split->sdep;
 // 		printf("p->b: %d   split: %d   (*(p->b->hook))->id: %d\n", p->b->id, split->id, (*(p->b->hook))->id);
 // 		printf("!!!!!!!!!!!!!!rootchildid: %d\n", root->child->id);
 // 		printf("pbid: %d   pbhookid: %d\n", p->b->id, (*(p->b->hook))->id);
@@ -184,8 +182,8 @@ void AddLeaf(Point *p, int i, int jj){
 		split->slink = root;
 		Node *node = initNode();
 		node->Ti = i;
-		node->head = jj;
-		node->sdep = ni[i] - jj + 1;
+		node->head = j - p->s;
+		node->sdep = ni[i] + 1;
 		node->name = Ti[node->Ti];
 		p->b->brother = node;
 		node->hook = &(p->b->brother);
@@ -207,6 +205,8 @@ void AddLeaf(Point *p, int i, int jj){
 // 		if (aux->sdep - 1 == 1){
 // 			aux->slink = root;
 // 		}
+		p->a = split;
+		p->b = node;
 		if (previouslySplit != NULL && previouslySplit->sdep != 1){
 			previouslySplit->slink = split;
 		}
@@ -216,48 +216,23 @@ void AddLeaf(Point *p, int i, int jj){
 	}
 }
 
-
-
-
-void SuffixLink(Point *p){
-// 	if (p->s != 0){ // if not at start of string AKA if in internal node
-// 		p->a = p->a->slink;
-// 		p->b = p->a;
-// 		p->s--;
-// 	}
-// 	else{
-		p->a = (p->a)->slink;
-// 		if (p->a->child != NULL){
-// 			p->b = p->a->child;
-// 		}
-// 		else {
-			p->b = p->a;
-// 		}
-		p->s = p->a->sdep;
-// 		printf("SUFFIXLINK pa: %d    pb: %d\n", p->a->id, p->b->id);
-// 		p->s = (p->a)->sdep;
-// 		printf("PS==0   %d  FOLLOWED SUFFIX LINK\n", p->s);
-// 	}
-}
-
-
 void Descend(Point *p){
 	p->s += 1;
-// 	printf("ps: %d  pbsdep: %d   pa: %d pb: %d\n", p->s, p->b->sdep, p->a->id, p->b->id);
-	if (p->s == (p->b)->sdep){
+// 	printf("Descend   p->s: %d   p->b->id: %d    (p->b)->sdep: %d p->b->head: %d\n", p->s, p->b->id, (p->b)->sdep, p->b->head);
+	if ((p->b->head + p->s) == (p->b)->sdep){
 // 		printf("DESCEND NODE\n");
 		p->a = p->b;
 // 		if (p->a->child != NULL){
 // 			p->b = p->a->child;
 // 		}
-		p->s = 0;
+// 		p->s = 0;
 	}
 // 	printf("DESCEND\n");
 }
 
 
 bool DescendQ(Point *p, char c){
-// 	printf("c: %c\n", c);
+// 	printf("DescendQ c: %c ps: %d pa: %d pb: %d\n", c, p->s, p->a->id, p->b->id);
 	char curr;
 	if ((p->a)->sdep == -1){ // Testing if pointing to sentinel
 		p->a = p->a->child;
@@ -267,17 +242,19 @@ bool DescendQ(Point *p, char c){
 		return true;
 	}
 	else{
-// 		printf("ps: %d pa: %d pb: %d\n", p->s, p->a->id, p->b->id);
-		if (p->s == 0){
+// 		printf("DescendQ\n");
+		if ((p->s + p->b->head - p->b->sdep) == 0){
 			if(p->a->child == NULL){
 				return false;
 			}
 			else{
-				p->b = p->a->child;
+				if (p->b == p->a){
+					p->b = p->a->child;
+				}
 			}
-			curr = Ti[p->b->Ti][p->b->head + p->s];
+			curr = Ti[p->b->Ti][p->s + p->b->head];
 // 			curr = Ti[p->b->Ti][p->s];
-// 			printf("curr1: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
+// 			printf("DescendQ curr1: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
 			if (curr == c){
 				p->b = p->a->child;
 				return true;
@@ -285,8 +262,8 @@ bool DescendQ(Point *p, char c){
 			else{
 				Node * aux = p->b->brother;
 				while(aux != NULL){
-					curr = Ti[aux->Ti][aux->head];
-// 					printf("curr3: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
+					curr = Ti[aux->Ti][aux->head + p->s];
+// 					printf("DescendQ curr3: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
 					if (curr == c){
 						p->b = aux;
 // 							printf("match\n");
@@ -294,13 +271,14 @@ bool DescendQ(Point *p, char c){
 					}
 					aux = aux->brother;
 				}
+				p->b = p->a;
 				return false;
 			}
 		}
 		else{
 			curr = Ti[p->b->Ti][p->b->head + p->s];
 // 			curr = Ti[p->b->Ti][p->s];
-// 			printf("curr2: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
+// 			printf("DescendQ curr2: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
 			return curr == c;
 		}
 		
@@ -316,6 +294,87 @@ bool DescendQ(Point *p, char c){
 // 		return false;
 	}
 }
+
+
+void SuffixLink(Point *p){
+	
+	int head = p->s - 1;
+// 	int head = p->s - 1;
+	Node *phead = p->b;
+// 	printf("SuffixLink BEFORE JUMP p->s: %d    p->aid: %d    p->a->slink: %d    phead: %d\n", p->s, p->a->id, p->a->slink->id, phead->id);
+	p->a = p->a->slink;
+	p->b = p->a;
+	p->s = p->a->sdep;
+// 	printf("SuffixLink AFTER JUMP p->s: %d    p->aid: %d   p->bid: %d\n", p->s, p->a->id, p->b->id);
+	if (head >= 0){
+// 		printf("SuffixLink before DescendQ with %d\n", phead->head + 1);
+		
+		
+		DescendQ(p, Ti[phead->Ti][phead->head + 1]);
+		p->s = head;
+// 		if ((p->s - 1) == (p->b)->sdep){
+// 			p->a = p->b;
+// 		}
+		if ((p->b->head + p->s) == (p->b)->sdep){
+			p->a = p->b;
+		}
+// 		if (p->s == (p->b)->sdep){
+// 			p->a = p->b;
+// 		}
+// 		p->s = head + p->b->head;
+// 		printf("SuffixLink after Descend p->a->id: %d p->b->id %d p->s: %d\n", p->a->id, p->b->id, p->s);
+// 		if (p->s == -1){
+// 			p->a = p->a->child;
+// 			p->b = p->a;
+// // 			p->s = p->a->sdep;
+// 		}
+// 		else{
+			
+			
+// 			p->s = head;
+// 		}
+// 		printf("SuffixLink AFTER IF p->s: %d    p->aid: %d    p->bid: %d\n", p->s, p->a->id, p->b->id);
+	}
+	
+// 	if (p->b->sdep < head){
+// 		printf("while conditions: p->s: %d    head: %d\n", p->s, head);
+// // 		DescendQ(p, Ti[p->b->Ti][p->b->head + p->s]);
+// 		DescendQ(p, Ti[previouslySplit->Ti][previouslySplit->head + p->s]);
+// 		Descend(p);
+// 		if (head > 0){
+// 			p->s += head;
+// 		}
+// 		printf("After DescendQ: pbid: %d    p->s: %d\n", p->b->id, p->s);
+// 	}
+
+
+
+// 	if (p->b->sdep < head){
+// 		printf("SuffixLink while conditions: pbsdep: %d    head: %d\n", p->b->sdep, head);
+// 		if ((p->a)->sdep == -1){ // Testing if pointing to sentinel
+// 			printf("SuffixLink before p->a->id: %d  p->b->id: %d\n", p->a->id, p->b->id);
+// 			p->a = p->a->child;
+// 			p->b = p->a;
+// 			printf("SuffixLink after p->a->id: %d  p->b->id: %d\n", p->a->id, p->b->id);
+// 		}
+// 		DescendQ(p, Ti[p->b->Ti][p->s + 1]);
+// 		p->s += 1;
+// 		if ((p->s - p->b->head) == (p->b)->sdep){
+// 			printf("SuffixLink GOING TO P->B\n");
+// 			p->a = p->b;
+// 		}
+// 		else{
+// 			p->s = head + 1;
+// 		}
+// // 	printf("DESCEND\n");
+// 		printf("SuffixLink After DescendQ: pbid: %d    p->s: %d\n", p->b->id, p->s);
+// 	}
+// 	p->s = head;
+// 	printf("After suffixjump: pbid: %d    p->s: %d\n", p->b->id, p->s);
+}
+
+
+
 
 Node * buildST(int numberOfStrings){
 	root = initNode();
@@ -333,7 +392,7 @@ Node * buildST(int numberOfStrings){
 	int i = 0;
 	while(i < numberOfStrings){
 		p->s = 0;
-		j = 0;
+		int j = 0;
 		Ti[i][ni[i]]= '!';
 // 		if (i == 0){
 // 			Ti[i][ni[i]]= '!';
@@ -353,7 +412,7 @@ Node * buildST(int numberOfStrings){
 				SuffixLink(p);
 // 				if (j != 0){
 // 					printST(root->child);
-// 					printf("-----------    j: %d   ----------\n", j);
+// 					printf("---------------------\n");
 // 				}
 // 				if (j != 0){
 // 					printf("|||||||||||||||||||||DEPOIS|||||||||||||||||||\n");
