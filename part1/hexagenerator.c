@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <linux/random.h>
+#include "project.c"
 
 int main() {
 	int seed;
@@ -21,5 +21,8 @@ int main() {
 	}
 	number = rand() & 0xffffff;
 	printf("A %06x", number);
+    
+    clean();
+    
 	return 0;
 }
