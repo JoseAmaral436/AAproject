@@ -411,7 +411,7 @@ Node * buildST(int numberOfStrings) {
 		i++;
 	}
 	free(p);
-	free(sentinel);
+//	free(sentinel);
 	return root;
 }
 
@@ -464,6 +464,8 @@ void DFS(Node* root) {
 	push(root);
 	while (stack != NULL) {
 		Entry* curr = stack;
+		if(curr->node->id == 44 || curr->node->id == 43)
+			printf("################################################");
 //		printString(curr->node);
 		if (curr->visited == 0) {
 			if (curr->node->child != NULL) {
@@ -540,7 +542,25 @@ void DFS(Node* root) {
 //	printString(root);
 //	return NULL;
 }
+int *result;
+void traverseST(Node* n) {
+	if (n == NULL)
+		return;
 
+	if (n->child == NULL) {
+		if (n->suffixesSize > 1
+				&& result[n->suffixesSize - 2] < n->sdep - n->head - 1) {
+			result[n->suffixesSize - 2] = n->sdep - n->head - 1;
+		}
+	} else {
+		if (n->suffixesSize > 1
+				&& result[n->suffixesSize - 2] < n->sdep - n->head) {
+			result[n->suffixesSize - 2] = n->sdep - n->head;
+		}
+	}
+	traverseST(n->child);
+	traverseST(n->brother);
+}
 int main() {
 	int numOfLines = 0;
 	char *number = NULL;
@@ -574,7 +594,19 @@ int main() {
 //	printST(root->child);
 
 	DFS(root);
+
+	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
+	for (i = 0; i < numOfLines - 1; i++) {
+		result[i] = 0;
+	}
+	traverseST(root->child);
+
 	printST(root);
+	printf("\nRESULT = ");
+	for (i = 0; i < numOfLines - 1; i++) {
+		printf("[%d]", result[i]);
+	}
+	printf("\n\n");
 
 	clean(root);
 	free(line);
