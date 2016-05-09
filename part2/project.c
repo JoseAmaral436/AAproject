@@ -527,13 +527,11 @@ Entry* pop() {
 	stack = stack->next;
 	return pop;
 }
-
+int *result;
 void DFS(Node* root) {
 	push(root);
 	while (stack != NULL) {
 		Entry* curr = stack;
-		if(curr->node->id == 44 || curr->node->id == 43)
-			printf("################################################\n");
 //		printString(curr->node);
 		if (curr->visited == 0) {
 			if (curr->node->child != NULL) {
@@ -601,6 +599,10 @@ void DFS(Node* root) {
 //				}
 			}
 			iter++;
+			if (curr->node->suffixesSize > 1
+					&& result[curr->node->suffixesSize - 2] < curr->node->sdep - curr->node->head) {
+				result[curr->node->suffixesSize - 2] = curr->node->sdep - curr->node->head;
+			}
 			free(popped);
 //			printString(curr->node);
 //			printIndexes();
@@ -611,37 +613,39 @@ void DFS(Node* root) {
 //	return NULL;
 }
 
+
 int *result;
 
-void traverseST(Node* n) {
-	if (n == NULL)
-		return;
+// void traverseST(Node* n) {
+// 	if (n == NULL)
+// 		return;
+// 
+// 	if (n->child == NULL) {
+// 		if (n->suffixesSize > 1
+// 				&& result[n->suffixesSize - 2] < n->sdep - n->head - 1) {
+// 			printf("hello1\n"); 
+// 			result[n->suffixesSize - 2] = n->sdep - n->head - 1;
+// 		}
+// 	} else {
+// 		if (n->suffixesSize > 1
+// 				&& result[n->suffixesSize - 2] < n->sdep - n->head) {
+// 			printf("hello2 n->sdep: %d    n->head: %d\n", n->sdep, n->head); 
+// 			result[n->suffixesSize - 2] = n->sdep - n->head;
+// 		}
+// 	}
+// 	int i;
+// 	printf("node %d: ", n->id);
+// 	if (n->child != NULL){
+// 		printf("with child %d: ", n->child->id);
+// 	}
+// 	for (i = 0; i < 4; i++) {
+// 		printf("[%d]",result[i]);
+// 	}
+// 	printf("\n");
+// 	traverseST(n->child);
+// 	traverseST(n->brother);
+// }
 
-	if (n->child == NULL) {
-		if (n->suffixesSize > 1
-				&& result[n->suffixesSize - 2] < n->sdep - n->head - 1) {
-			printf("hello1\n"); 
-			result[n->suffixesSize - 2] = n->sdep - n->head - 1;
-		}
-	} else {
-		if (n->suffixesSize > 1
-				&& result[n->suffixesSize - 2] < n->sdep - n->head) {
-			printf("hello2 n->sdep: %d    n->head: %d\n", n->sdep, n->head); 
-			result[n->suffixesSize - 2] = n->sdep - n->head;
-		}
-	}
-	int i;
-	printf("node %d: ", n->id);
-	if (n->child != NULL){
-		printf("with child %d: ", n->child->id);
-	}
-	for (i = 0; i < 4; i++) {
-		printf("[%d]",result[i]);
-	}
-	printf("\n");
-	traverseST(n->child);
-	traverseST(n->brother);
-}
 
 int main() {
 	int numOfLines = 0;
@@ -675,13 +679,13 @@ int main() {
 	root = buildST(numOfLines);
 // 	printST(root->child);
 
-	DFS(root);
-
 	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
 	for (i = 0; i < numOfLines - 1; i++) {
 		result[i] = 0;
 	}
-	traverseST(root->child);
+	DFS(root);
+
+//	traverseST(root->child);
 
 	printST(root);
 	printf("\nRESULT = ");
