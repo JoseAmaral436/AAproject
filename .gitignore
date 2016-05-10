@@ -7,3 +7,4 @@ in
 .project
 tests/
 script.sh
+enunciadoTests.sh
