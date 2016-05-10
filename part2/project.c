@@ -34,6 +34,7 @@ int id = 0;
 Node *root = NULL;
 Node *previouslyNode = NULL;
 Node *previouslySplit = NULL;
+int *result;
 
 Node* initNode() {
 	Node* node = malloc(sizeof(Node));
@@ -54,6 +55,12 @@ Node* initNode() {
 void printString(Node *n) {
 	int i;
 	printf("node %d [%d, %d] ", n->id, n->head, n->sdep);
+	if (n->child != NULL){
+		printf("with child %d ", n->child->id);
+	}
+	if (n->brother != NULL){
+		printf("with brother %d ", n->brother->id);
+	}
 	if (n->slink != NULL) {
 		printf("slink %d -> ", n->slink->id);
 	}
@@ -90,12 +97,13 @@ void printST(Node *root) {
 
 void AddLeaf(Point *p, int i, int j) {
 // 	printf("AddLeaf pa: %d   pb: %d\n", (p->a)->id, (p->b)->id);
-// 	printf("AddLeaf ps: %d   p->b->head: %d\n", p->s, p->b->head);
-	if ((p->s - p->b->sdep) == 0) {
+// 	printf("AddLeaf ps: %d   p->b->head: %d   p->b->sdep: %d\n", p->s, p->b->head, p->b->sdep);
+// 	if ((p->s - (p->b->sdep - p->b->head)) == 0) {
+	if (p->a == p->b) {
 // 		printf("AddLeaf NORMAL\n");
 		Node *node = initNode();
 		node->Ti = i;
-		node->head = j - p->a->sdep;
+		node->head = j - (p->b->sdep - p->b->head);
 		node->sdep = ni[i] + 1;
 //		node->name = Ti[node->Ti];
 		// 	printf("namea: %s    sdepa: %d  nameb: %s    sdepb: %d   ps: %d\n", p->a->name, p->a->sdep, p->b->name, p->b->sdep, p->s);
@@ -111,10 +119,10 @@ void AddLeaf(Point *p, int i, int j) {
 			ancestor->brother = node;
 			node->hook = &(ancestor->brother);
 		}
-		if ((previouslyNode != root) && (node->sdep != 1)) {
+		if ((previouslyNode != root) && (node->sdep - node->head != 1)) {
 			previouslyNode->slink = node;
 		}
-		if (node->sdep - 1 == 1) {
+		if (node->sdep - node->head - 1 == 1) {
 			node->slink = root;
 		}
 // 		if (i == 0 && j == 0){
@@ -124,6 +132,10 @@ void AddLeaf(Point *p, int i, int j) {
 // 			previouslyAdded[0] = previouslyAdded[1];
 // 			previouslyAdded[1] = node;
 // 		}
+		if (previouslySplit != NULL && ((previouslySplit->sdep - previouslySplit->head) > 1)) {
+			previouslySplit->slink = p->a;
+			previouslySplit = NULL;
+		}
 		previouslyNode = node;
 		p->b = node;
 	}
@@ -203,13 +215,16 @@ void AddLeaf(Point *p, int i, int j) {
 // 			aux->slink = root;
 // 		}
 		p->a = split;
-		p->b = node;
-		if (previouslySplit != NULL && previouslySplit->sdep != 1) {
-			previouslySplit->slink = split;
+		if (previouslySplit != NULL && ((previouslySplit->sdep - previouslySplit->head) > 1)) {
+// 			printf("||||||||||||||||||||||||||||||||||previouslySplit: %d  split: %d\n", previouslySplit->id, split->id);
+			previouslySplit->slink = p->a;
 		}
 		previouslySplit = split;
-		previouslyNode->slink = node;
+		if (previouslyNode != root){
+			previouslyNode->slink = node;
+		}
 		previouslyNode = node;
+		p->b = node;
 	}
 }
 
@@ -237,8 +252,9 @@ bool DescendQ(Point *p, char c) {
 // 		printf("sentinel %c \n", c);
 		return true;
 	} else {
-// 		printf("DescendQ\n");
-		if ((p->s + p->b->head - p->b->sdep) == 0) {
+// 		printf("DescendQ p->b->head:%d    p->b->sdep: %d\n", p->b->head, p->b->sdep);
+// 		if ((p->s + p->b->head - p->b->sdep) == 0) {
+		if (p->a == p->b) {
 			if (p->a->child == NULL) {
 				return false;
 			} else {
@@ -256,6 +272,10 @@ bool DescendQ(Point *p, char c) {
 				Node * aux = p->b->brother;
 				while (aux != NULL) {
 					curr = Ti[aux->Ti][aux->head + p->s];
+					if (aux->head + p->s > ni[aux->Ti]){
+						printf("*************************************************************************\n");
+						printf("DescendQ curr3: %c aux->Ti: %d   aux->head + p->s: %d\n", curr, aux->Ti, aux->head + p->s);
+					}
 // 					printf("DescendQ curr3: %c p->bid: %d   ps: %d   head: %d\n", curr, p->b->id, p->s, p->b->head);
 					if (curr == c) {
 						p->b = aux;
@@ -289,24 +309,93 @@ bool DescendQ(Point *p, char c) {
 void SuffixLink(Point *p) {
 
 	int head = p->s - 1;
-// 	int head = p->s - 1;
 	Node *phead = p->b;
 // 	printf("SuffixLink BEFORE JUMP p->s: %d    p->aid: %d    p->a->slink: %d    phead: %d\n", p->s, p->a->id, p->a->slink->id, phead->id);
 	p->a = p->a->slink;
 	p->b = p->a;
-	p->s = p->a->sdep;
+	p->s = p->a->sdep - p->a->head;
 // 	printf("SuffixLink AFTER JUMP p->s: %d    p->aid: %d   p->bid: %d\n", p->s, p->a->id, p->b->id);
-	if (head >= 0) {
-// 		printf("SuffixLink before DescendQ with %d\n", phead->head + 1);
+// 	if (head >= 0) {
+	int index = phead->head + 1;
+	if (p->b->sdep < head) {
+// 		printf("SuffixLink before DescendQ with %d\n", index);
 
-		DescendQ(p, Ti[phead->Ti][phead->head + 1]);
+		DescendQ(p, Ti[phead->Ti][index]);
 		p->s = head;
 // 		if ((p->s - 1) == (p->b)->sdep){
 // 			p->a = p->b;
 // 		}
+		
 		if ((p->b->head + p->s) == (p->b)->sdep) {
 			p->a = p->b;
+			
 		}
+		if((p->b->head + p->s) > (p->b)->sdep){
+			int x = 0;
+			p->s = (p->b->sdep - p->b->head);
+			Node *aux = p->a;
+			p->a = p->b;
+			index = index + (p->b->sdep - p->b->head);
+// 			printf("phead->Ti: %d       index: %d           p->s: %d\n", phead->Ti, index, p->s);
+			bool desc = DescendQ(p, Ti[phead->Ti][index]);
+			while(desc){
+// 				printf("||||||||||||||||||||||||||||||||||\n");
+// 				printf("p->s: %d    head: %d  c: %c   p->b->Ti: %d   p->b->sdep-1 %d\n", p->s, head, Ti[p->b->Ti][p->b->sdep-1], p->b->Ti, p->b->sdep-1);
+				if ((p->b->sdep - p->b->head) == head){// && ){
+					if (Ti[p->b->Ti][p->b->sdep-1] != '-'){
+						p->a = p->b;
+					}
+					x = 1;
+// 					printf("############################################0\n");
+					break;
+				}
+				if ((p->b->sdep - p->b->head) > head){
+// 					x = 1;
+// 					printf("############################################1\n");
+					break;
+				}
+				p->s = (p->b->sdep - p->b->head);
+				index = index + (p->b->sdep - p->b->head);
+				aux = p->a;
+				p->a = p->b;
+				desc = DescendQ(p, Ti[phead->Ti][index]);
+				if (!desc){
+					x = 1;
+					break;
+				}
+			}
+			if (!desc){
+				x = 1;
+			}
+			if (p->a != aux && x == 0){
+				p->a = aux;
+			}
+			p->s = head;
+// 			printf("#################SuffixLink p->b->head: %d  p->s: %d (p->b)->sdep: %d p->b->child->head: %d   p->b->child->sdep: %d\n", p->b->head, p->s, (p->b)->sdep, p->b->child->head, p->b->child->sdep);
+// 			head = head - (p->b->sdep - p->b->head);
+// 			
+// 			p->a = p->b;
+		}
+		//CODE-----------------------------------------------
+// 		while ((p->b->head + p->s) > (p->b)->sdep){
+// 			printf("################################################\n");
+// 			p->a = p->b;
+// 			p->s = (p->b->sdep - p->b->head);
+// 			head = head - (p->b->sdep - p->b->head);
+// 			index = index + (p->b->sdep - p->b->head);
+// 			DescendQ(p, Ti[phead->Ti][index]);
+// 			p->s++;
+// 			printf("SuffixLink p->s: %d    p->aid: %d   p->bid: %d   p->b->head: %d   p->b->sdep: %d\n", p->s, p->a->id, p->b->id, p->b->head, p->b->sdep);
+// 			if ((p->b->head + p->s) == (p->b)->sdep) {
+// 				p->a = p->b;
+// 			}
+// // 			if ((p->b->head + p->s) < (p->b)->sdep){
+// // 				printf("!!!!!!!!!!!!!!!SuffixLink p->s: %d    p->aid: %d   p->bid: %d   p->b->head: %d   p->b->sdep: %d\n", p->s, p->a->id, p->b->id, p->b->head, p->b->sdep);
+// // 				p->s = head;
+// // 			}
+// 		}
+		//CODE-----------------------------------------------
+		
 // 		if (p->s == (p->b)->sdep){
 // 			p->a = p->b;
 // 		}
@@ -409,9 +498,13 @@ Node * buildST(int numberOfStrings) {
 		}
 		Ti[i][ni[i]] = '-';
 		i++;
+		p->a = root;
+		p->b = root;
+		previouslySplit = NULL;
+		previouslyNode = root;
 	}
 	free(p);
-//	free(sentinel);
+	free(sentinel);
 	return root;
 }
 
@@ -431,6 +524,7 @@ void clean(Node * node) {
 		free(node);
 	}
 }
+
 Suffix* initSuffix(int id) {
 	Suffix* s = (Suffix*) malloc(sizeof(Suffix));
 	s->id = id;
@@ -445,7 +539,9 @@ typedef struct entry {
 	Node* node;
 	struct entry* next;
 } Entry;
+
 Entry* stack = NULL;
+
 void push(Node* n) {
 	Entry* new = (Entry*) malloc(sizeof(Entry));
 	new->visited = 0;
@@ -459,13 +555,12 @@ Entry* pop() {
 	stack = stack->next;
 	return pop;
 }
-int *result;
+
+
 void DFS(Node* root) {
 	push(root);
 	while (stack != NULL) {
 		Entry* curr = stack;
-		if (curr->node->id == 44 || curr->node->id == 43)
-			printf("################################################");
 //		printString(curr->node);
 		if (curr->visited == 0) {
 			if (curr->node->child != NULL) {
@@ -547,24 +642,38 @@ void DFS(Node* root) {
 //	return NULL;
 }
 
-//void traverseST(Node* n) {
-//	if (n == NULL)
-//		return;
-//
-//	if (n->child == NULL) {
-//		if (n->suffixesSize > 1
-//				&& result[n->suffixesSize - 2] < n->sdep - n->head - 1) {
-//			result[n->suffixesSize - 2] = n->sdep - n->head - 1;
-//		}
-//	} else {
-//		if (n->suffixesSize > 1
-//				&& result[n->suffixesSize - 2] < n->sdep - n->head) {
-//			result[n->suffixesSize - 2] = n->sdep - n->head;
-//		}
-//	}
-//	traverseST(n->child);
-//	traverseST(n->brother);
-//}
+
+// void traverseST(Node* n) {
+// 	if (n == NULL)
+// 		return;
+// 
+// 	if (n->child == NULL) {
+// 		if (n->suffixesSize > 1
+// 				&& result[n->suffixesSize - 2] < n->sdep - n->head - 1) {
+// 			printf("hello1\n"); 
+// 			result[n->suffixesSize - 2] = n->sdep - n->head - 1;
+// 		}
+// 	} else {
+// 		if (n->suffixesSize > 1
+// 				&& result[n->suffixesSize - 2] < n->sdep - n->head) {
+// 			printf("hello2 n->sdep: %d    n->head: %d\n", n->sdep, n->head); 
+// 			result[n->suffixesSize - 2] = n->sdep - n->head;
+// 		}
+// 	}
+// 	int i;
+// 	printf("node %d: ", n->id);
+// 	if (n->child != NULL){
+// 		printf("with child %d: ", n->child->id);
+// 	}
+// 	for (i = 0; i < 4; i++) {
+// 		printf("[%d]",result[i]);
+// 	}
+// 	printf("\n");
+// 	traverseST(n->child);
+// 	traverseST(n->brother);
+// }
+
+
 int main() {
 	int numOfLines = 0;
 	char *number = NULL;
@@ -595,7 +704,7 @@ int main() {
 		Ti[i - 1] = strdup(token);
 	}
 	root = buildST(numOfLines);
-//	printST(root->child);
+// 	printST(root->child);
 
 	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
 	for (i = 0; i < numOfLines - 1; i++) {
@@ -605,13 +714,23 @@ int main() {
 
 //	traverseST(root->child);
 
-	printST(root);
-	printf("\nRESULT = ");
-	for (i = 0; i < numOfLines - 1; i++) {
-		printf("[%d]", result[i]);
+// 	printST(root);
+// 	printf("\nRESULT = ");
+// 	for (i = 0; i < numOfLines - 1; i++) {
+// 		printf("[%d]", result[i]);
+// 	}
+// 	printf("\n\n");
+	//fix if inconsistencia aula 29/03
+	for (i = numOfLines-2; i > 0 ; i--) {
+		if (result[i] > result[i-1]){
+			result[i-1] = result[i];
+		}
 	}
-	printf("\n\n");
-
+// 	printf("\nRESULT = ");
+	for (i = 0; i < numOfLines - 1; i++) {
+		printf("%d ", result[i]);
+	}
+	printf("\n");
 	clean(root);
 	free(line);
 	for (i = 0; i < numOfLines; i++) {
@@ -620,5 +739,6 @@ int main() {
 	free(Ti);
 	free(ni);
 	free(suffixesIdx);
+	free(result);
 	return 0;
 }
