@@ -1,5 +1,5 @@
 CC=gcc 
-CFLAGS= -g -Wall
+CFLAGS= -g -ansi -Wall
 
 all: clean project run
 
