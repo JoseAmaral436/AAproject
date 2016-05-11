@@ -290,31 +290,20 @@ int main() {
 
 	root = NULL;
 	int numOfLines = 0;
-	char *number = NULL;
-	size_t size;
-	if (getline(&number, &size, stdin) == -1) {
+	scanf("%d\n", &numOfLines);
+	if (numOfLines == 0) {
 		printf("No number\n");
-	} else {
-		numOfLines = atoi(number);
 	}
 	int i;
-	free(number);
-	char *line = NULL;
-	size_t sizeOfLine;
+	char *line = malloc(sizeof(char) * 6);;
 	Info * find = malloc(sizeof(Info));
 	for (i = 1; i <= numOfLines; i++) {
 		Node *result = NULL;
-		getline(&line, &sizeOfLine, stdin);
-		int lineSize = strlen(line);
-		if (i != numOfLines) {
-			line[lineSize - 1] = '\0'; //all strings have '\n' in the end beside the last
-		} else {
-			line[lineSize] = '\0'; // last string doesnt have '\n'
-		}
-		switch (line[0]) {
+		char op;
+		scanf("%c", &op);
+		switch (op) {
 		case 'A':
-			memmove(line, line + 1, strlen(line));
-			memmove(line, line + 1, strlen(line));
+			scanf("%s\n", line);
 			Info * info = malloc(sizeof(Info));
 			info->key = malloc(sizeof(line));
 			info->numOfOcc = 0;
@@ -341,8 +330,7 @@ int main() {
 			printf("%d\n", ((Info*) (result->value))->numOfOcc);
 			break;
 		case 'F':
-			memmove(line, line + 1, strlen(line));
-			memmove(line, line + 1, strlen(line));
+			scanf("%s\n", line);
 			find->key = malloc(sizeof(line));
 			strcpy(find->key, line);
 			result = tfind(find, &root, compareKeys);
@@ -354,8 +342,7 @@ int main() {
 			free(find->key);
 			break;
 		case 'D':
-			memmove(line, line + 1, strlen(line));
-			memmove(line, line + 1, strlen(line));
+			scanf("%s\n", line);
 			find->key = malloc(sizeof(line));
 			strcpy(find->key, line);
 			Node *toDelete = tfind(find, &root, compareKeys);
