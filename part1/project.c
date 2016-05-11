@@ -1,8 +1,8 @@
-//http://opendatastructures.org/ods-java/7_2_Treap_Randomized_Binary.html
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 
 typedef struct info {
 	int numOfOcc;
@@ -20,17 +20,17 @@ typedef struct node {
 void *root;
 
 int compareKeys(const void *pa, const void *pb) {
-	Info * la = (Info *) ((Node *) pa)->value;
-	Info * lb = (Info *) ((Node *) pb)->value;
+	Info * la = (Info *) pa;
+	Info * lb = (Info *) pb;
 
 	return strcmp(la->key, lb->key);
 }
 
 int comparePriorities(const void *pa, const void *pb) {
- Info * la = (Info *) ((Node *) pa)->value;
- Info * lb = (Info *) ((Node *) pb)->value;
+	Info * la = (Info *) pa;
+	Info * lb = (Info *) pb;
 
- return la->priority < lb->priority;
+	return la->priority < lb->priority;
 }
 
 void *tsearch(const void *key, void **rootp,
@@ -46,7 +46,7 @@ void *tsearch(const void *key, void **rootp,
 		Node *aux = *rootp;
 		int cmp;
 		while (aux != NULL) {
-			cmp = compar(&key, &(aux->value));
+			cmp = compar(key, aux->value);
 			if (cmp < 0) {
 				if (aux->left == NULL) {
 					Node *new = malloc(sizeof(Node));
@@ -79,21 +79,6 @@ void *tsearch(const void *key, void **rootp,
 	}
 }
 
-/*Node * findmin(void **rootp, int (*compar)(const void *, const void *)) {
- if (*rootp == NULL) {
- return NULL;
- } else {
- Node *aux = *rootp;
- while (1) {
- if (aux->left == NULL) {
- return aux;
- } else {
- aux = aux->left;
- }
- }
- }
- }*/
-
 void * tfind(const void *key, void **rootp,
 		int (*compar)(const void *, const void *)) {
 	if (*rootp == NULL) {
@@ -103,7 +88,7 @@ void * tfind(const void *key, void **rootp,
 		int compare;
 		while (1) {
 
-			compare = (compar(&key, &(aux->value)));
+			compare = (compar(key, aux->value));
 			if (compare < 0) {
 				if (aux->left == NULL) {
 					return NULL;
@@ -125,7 +110,7 @@ void * tfind(const void *key, void **rootp,
 }
 
 void * tdelete(const void *key, void **rootp,
-		int (*compar)(const void *, const void *)) { //TODO IF REMOVE ROOT
+		int (*compar)(const void *, const void *)) {
 	if (*rootp == NULL) {
 		return NULL;
 	} else {
@@ -134,7 +119,7 @@ void * tdelete(const void *key, void **rootp,
 		int parentage = -1; //0 if left, 1 if right
 		int compare;
 		while (1) {
-			compare = (compar(&key, &(curr->value)));
+			compare = (compar(key, curr->value));
 			if (compare < 0) {
 				if (curr->left == NULL) {
 					return NULL;
@@ -191,15 +176,13 @@ void * tdelete(const void *key, void **rootp,
 						((Node *) (*rootp))->parent = NULL;
 					}
 					curr = NULL;
-				} else { // 2 CHILDREN 
+				} else { // 2 CHILDREN
 					Node *minParent = curr;
-// 					printf("!!!!%s\n", ((Info *)(((Node *)minParent)->value))->key);
 					Node *min = curr->right;
 					while (min->left != NULL) {
 						minParent = min;
 						min = min->left;
 					}
-					//printf("min  :%s\n", ((Info *)(((Node *)min)->value))->key);
 					if (curr == *rootp) {
 						*rootp = min;
 						((Node *) (*rootp))->parent = NULL;
@@ -213,10 +196,6 @@ void * tdelete(const void *key, void **rootp,
 							min->left = curr->left;
 							minParent->left = NULL;
 						}
-// 						printf("min  :%s\n", ((Info *)(((Node *)min)->value))->key);
-// 						printf("curr  :%s\n", ((Info *)(((Node *)curr)->value))->key);
-// 						printf("minParent  :%s\n", ((Info *)(((Node *)minParent)->value))->key);
-// 						break;
 					} else if (curr->right == min) {
 						curr->left->parent = min;
 						min->left = curr->left;
@@ -245,29 +224,8 @@ void * tdelete(const void *key, void **rootp,
 		}
 	}
 }
-char* checkNull(Node* n) {
-	if (n == NULL)
-		return "NULL";
-	return ((Info*) n->value)->key;
-}
-/*void printTree(Node * node) {
-	if (node != NULL) {
-		printf("key: %s    priority: %d   parent: %s left: %s right: %s\n",
-				((Info*) (node->value))->key, ((Info*) (node->value))->priority,
-				checkNull(node->parent), checkNull(node->left),
-				checkNull(node->right));
-//		printf("GOING LEFT\n");
-		printTree(node->left);
-//		printf("GOING RIGHT\n");
-		printTree(node->right);
-	}
-}*/
 
-int R_ROTATIONS = 0;
-int L_ROTATIONS = 0;
 void rotateLeft(Node *node) {
-//	printf("ROTATE LEFT\n");
-    L_ROTATIONS++;
 	Node* aux = node->right;
 	aux->parent = node->parent;
 	if (aux->parent != NULL) {
@@ -287,47 +245,9 @@ void rotateLeft(Node *node) {
 		root = aux;
 		((Node*) root)->parent = NULL;
 	}
-
-//	if (node->parent != NULL){ // node is not root
-//		node->parent->right = node->left;
-//		node->left = node->parent;
-//		if (node->parent->parent == NULL){ // parent of node is root
-//			root = node;
-//		}
-//		node->parent = node->parent->parent;
-//		node->left->parent = node;
-//		if (node->left->right != NULL){
-//			node->left->right->parent = node->left->right;
-//		}
-//// 		node->parent->left = node->right;
-//// 		node->right->parent = node->parent;
-//// 		node->right = node->right->left;
-//// 		if (node->right != NULL){
-//// 			node->right->parent = node;
-//// 		}
-//// 		node->parent->left->left = node;
-//// 		node->parent = node->parent->left;
-//	}
-//	else{ // node is root
-//		Node *aux = node->right->left;
-//		node->right->left = node;
-//		node->parent = node->right;
-//		node->right->parent = NULL;
-//		node->right = aux;
-//		if (aux != NULL){
-//			aux->parent = node;
-//		}
-//		root = node->parent;
-//	}
-
-//	printTree(root);
-//	printf("---------------\n");
 }
 
 void rotateRight(Node *node) {
-//	printf("ROTATE RIGHT\n");
-    R_ROTATIONS++;
-    
 	Node* aux = node->left;
 	aux->parent = node->parent;
 	if (aux->parent != NULL) {
@@ -347,24 +267,6 @@ void rotateRight(Node *node) {
 		root = aux;
 		((Node*) root)->parent = NULL;
 	}
-
-//	if (node->parent != NULL){ // node is not root
-//
-//	}
-//	else{ // node is root
-//		Node *aux = node->left->right;
-//		node->left->right = node;
-//		node->parent = node->left;
-//		node->left->parent = NULL;
-//		node->left = aux;
-//		if (aux != NULL){
-//			aux->parent = node;
-//		}
-//		root = node->left;
-//	}
-//	printTree(root);
-//	printf("---------------\n");
-
 }
 
 void clean(Node * node) {
@@ -377,118 +279,13 @@ void clean(Node * node) {
 	}
 }
 
-int main(){
-   
-    int seed;
-    FILE *f = fopen("/dev/urandom", "r");
-    fread(&seed, sizeof(seed), 1, f);
-    fclose(f);
-    srand(seed);
-    
-    int MAX = 10000;
-    int MASK = 0xffffff;
-    const char* STR_FORMAT = "%06x";
-    char* keys[MAX];
-    int priorities[MAX];
-    int i;
-    for (i = 0; i < MAX; i++){
-        keys[i] = malloc(sizeof(MASK));
-        sprintf(keys[i], STR_FORMAT, rand() & MASK);
-        priorities[i] = rand();
-    }    
-    const char operations[3] = {'A', 'D', 'F'};
-    
-    Info* find = malloc(sizeof(Info));
-    for (i = 0; i < MAX; i++){
-        Node* result = NULL;
-        //char op = operations[0];
-        char op = operations[rand() % 3];
-        switch (op) {
-            case 'A':{
-                //printf("");
-                Info* info = malloc(sizeof(Info));
-                info->key = keys[i];
-                info->numOfOcc = 0;
-                info->priority = priorities[i];
-                result = tsearch(info, &root, compareKeys);
-                if (((Info*) (result->value))->numOfOcc != 0) { // this key already exists
-                    free(info->key);
-                    free(info);
-                } else { // new key (need to test heap property)
-                    while (result->parent != NULL && comparePriorities(result->parent, result)) {
-                        if (result->parent->right == result) {
-                            rotateLeft(result->parent);
-                        } else {
-                            rotateRight(result->parent);
-                        }
-                    }
-                    if (result->parent == NULL) {
-                        root = result;
-                    }
-                }
-                ((Info*) (result->value))->numOfOcc++;
-                printf("%d\n", ((Info*) (result->value))->numOfOcc);
-                break;
-            }
-            case 'F':
-                find->key = keys[i];
-                result = tfind(find, &root, compareKeys);
-                if (result == NULL) {
-                    printf("NULL\n");
-                } else {
-                    printf("%d\n", ((Info *) ((Node *) result)->value)->numOfOcc);
-                }
-                free(find->key);
-                break;
-            case 'D':
-                find->key = keys[i];
-                Node *toDelete = tfind(find, &root, compareKeys);
-                if (toDelete == NULL) {
-                    printf("NULL\n");
-                    free(find->key);
-                } else {
-                    printf("%d\n", ((Info *) ((Node *) toDelete)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
-                    while(toDelete->left != NULL || toDelete->right != NULL){
-                        if (toDelete->left == NULL){
-                            rotateLeft(toDelete);
-                        }
-                        else if (toDelete->right == NULL){
-                            rotateRight(toDelete);
-                        }
-                        else if (comparePriorities(toDelete->right, toDelete->left)){
-                            rotateRight(toDelete);
-                        }
-                        else{
-                            rotateLeft(toDelete);
-                        }
-                        if (toDelete == root){
-                            root = toDelete->parent;
-                        }
-                    }
-                    result = tdelete(find, &root, compareKeys);
-                    free(((Info *) ((Node *) toDelete)->value)->key);
-                    free(((void *) ((Node *) toDelete)->value));
-                    free(toDelete);
-                    free(find->key);
-                }
-                break;
-        }
-
-    }
-    printf("R_ROTATIONS= %d  L_ROTATIONS= %d\n",  R_ROTATIONS,  L_ROTATIONS);
-    clean(root);
-    free(find);
-    return 0;
-}
-/*int main() {
+int main() {
 
 	int seed;
-// 	uint16_t seed;
 	FILE *f;
 	f = fopen("/dev/urandom", "r");
 	fread(&seed, sizeof(seed), 1, f);
 	fclose(f);
-//   printf("%u\n", seed);
 	srand(seed);
 
 	root = NULL;
@@ -500,17 +297,7 @@ int main(){
 	} else {
 		numOfLines = atoi(number);
 	}
-// 	int priorities[numOfLines];
-// 	if (getline(&number, &size, stdin) == -1) {
-// 		printf("No priorities\n");
-// 	} else {
-// 		printf("Priorities\n");
-// 	}
 	int i;
-// 	priorities[0] = atoi(strtok(number, " "));
-// 	for (i = 1; i < numOfLines; i++) {
-// 		priorities[i] = atoi(strtok(NULL, " "));
-// 	}
 	free(number);
 	char *line = NULL;
 	size_t sizeOfLine;
@@ -526,13 +313,12 @@ int main(){
 		}
 		switch (line[0]) {
 		case 'A':
-			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
+			memmove(line, line + 1, strlen(line));
 			memmove(line, line + 1, strlen(line));
 			Info * info = malloc(sizeof(Info));
 			info->key = malloc(sizeof(line));
 			info->numOfOcc = 0;
 			info->priority = rand();
-// 			info->priority = priorities[i - 1];
 			strcpy(info->key, line);
 			result = tsearch(info, &root, compareKeys);
 			if (((Info*) (result->value))->numOfOcc != 0) { // this key already exists
@@ -540,7 +326,7 @@ int main(){
 				free(info);
 			} else { // new key (need to test heap property)
 				while (result->parent != NULL
-						&& comparePriorities(result->parent, result)) {
+						&& comparePriorities(result->parent->value, result->value)) {
 					if (result->parent->right == result) {
 						rotateLeft(result->parent);
 					} else {
@@ -555,7 +341,7 @@ int main(){
 			printf("%d\n", ((Info*) (result->value))->numOfOcc);
 			break;
 		case 'F':
-			memmove(line, line + 1, strlen(line)); //TODO TEST MEMORY LEAK
+			memmove(line, line + 1, strlen(line));
 			memmove(line, line + 1, strlen(line));
 			find->key = malloc(sizeof(line));
 			strcpy(find->key, line);
@@ -572,26 +358,24 @@ int main(){
 			memmove(line, line + 1, strlen(line));
 			find->key = malloc(sizeof(line));
 			strcpy(find->key, line);
-			Node *toDelete = tfind(find, &root, compareKeys); // CAN WE USE FIND IN CASE D ?
+			Node *toDelete = tfind(find, &root, compareKeys);
 			if (toDelete == NULL) {
 				printf("NULL\n");
 				free(find->key);
 			} else {
-				printf("%d\n", ((Info *) ((Node *) toDelete)->value)->numOfOcc); // NEED TO PRINT BEFORE DELETING
-				while(toDelete->left != NULL || toDelete->right != NULL){
-					if (toDelete->left == NULL){
+				printf("%d\n", ((Info *) ((Node *) toDelete)->value)->numOfOcc);
+				while (toDelete->left != NULL || toDelete->right != NULL) {
+					if (toDelete->left == NULL) {
+						rotateLeft(toDelete);
+					} else if (toDelete->right == NULL) {
+						rotateRight(toDelete);
+					} else if (comparePriorities(toDelete->right->value,
+							toDelete->left->value)) {
+						rotateRight(toDelete);
+					} else {
 						rotateLeft(toDelete);
 					}
-					else if (toDelete->right == NULL){
-						rotateRight(toDelete);
-					}
-					else if (comparePriorities(toDelete->right, toDelete->left)){
-						rotateRight(toDelete);
-					}
-					else{
-						rotateLeft(toDelete);
-					}
-					if (toDelete == root){
+					if (toDelete == root) {
 						root = toDelete->parent;
 					}
 				}
@@ -604,10 +388,9 @@ int main(){
 			break;
 		}
 	}
-	printTree(root);
 	clean(root);
 	free(line);
 	free(find);
 	return 0;
 }
-*/
+

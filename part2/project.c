@@ -1,8 +1,9 @@
+#define _XOPEN_SOURCE 700
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "sys/types.h"
+
 typedef struct suffix {
 	int id;
 	struct suffix * next;
@@ -519,43 +520,29 @@ void DFS(Node* root) {
 	}
 }
 
-ssize_t getline(char **lineptr, size_t *n, FILE *stream);
-char *strdup(const char *s);
-
 int main() {
-	int numOfLines = 0;
-	char *number = NULL;
-	size_t size;
-	if (getline(&number, &size, stdin) == -1) {
+	int numOfLines;
+	scanf("%d\n", &numOfLines);
+	if (numOfLines == 0) {
 		printf("No number\n");
-	} else {
-		numOfLines = atoi(number);
 	}
 	suffixesIdx = (int*) malloc(sizeof(int) * numOfLines);
-	free(number);
 	int i;
-	char *line = NULL;
-	size_t sizeOfLine;
-	char* token;
 	Ti = (char**) malloc(sizeof(char*) * numOfLines);
 	ni = (int *) malloc(sizeof(int) * numOfLines);
-	for (i = 1; i <= numOfLines; i++) {
-		getline(&line, &sizeOfLine, stdin);
-		token = strtok(line, " ");
-		ni[i - 1] = atoi(token);
-		token = strtok(NULL, " ");
-		token[ni[i - 1]] = '-'; /*all strings have '\n' in the end beside the last*/
-		if (i == numOfLines) {
-			token[ni[i - 1] + 1] = '\0'; /*last string doesnt have '\n'*/
-		}
-		Ti[i - 1] = strdup(token);
+	for (i = 0; i < numOfLines; i++) {
+		scanf("%d", &ni[i]);
+		Ti[i] = (char*) malloc(sizeof(char) * (ni[i] + 1));
+		scanf("%s", Ti[i]);
 	}
 	root = buildST(numOfLines);
 
 	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
-	for (i = 0; i < numOfLines - 1; i++) {
+	
+	for (i = 0; i < numOfLines - 2; i++) {
 		result[i] = 0;
 	}
+	
 	DFS(root);
 
 	/*printST(root);*/
@@ -572,7 +559,6 @@ int main() {
 	}
 	printf("\n");
 	clean(root);
-	free(line);
 	for (i = 0; i < numOfLines; i++) {
 		free(Ti[i]);
 	}
