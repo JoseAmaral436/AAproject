@@ -96,8 +96,8 @@ void AddLeaf(Point *p, int i, int j) {
  	/*printf("AddLeaf pa: %d   pb: %d\n", (p->a)->id, (p->b)->id);
  	printf("AddLeaf ps: %d   p->b->head: %d   p->b->sdep: %d\n", p->s, p->b->head, p->b->sdep);*/
 	if (p->a == p->b) {
-		printf("AddLeaf NORMAL j: %d p->b->sdep: %d  p->b->head: %d p->s: %d\n", j, p->b->sdep, p->b->head, p->s);
 		Node *node = initNode();
+		printf("AddLeaf NORMAL j: %d p->b->sdep: %d  p->b->head: %d p->s: %d id: %d\n", j, p->b->sdep, p->b->head, p->s, node->id);
 		node->Ti = i;
 		node->head = j - p->s;/* - (p->b->sdep - p->b->head);*/
 		node->sdep = ni[i] + 1;
@@ -162,8 +162,8 @@ void AddLeaf(Point *p, int i, int j) {
 	 p->b->brother = aux;
 	 }*/
 	else {
-		printf("AddLeaf SPLIT\n");
 		Node *split = initNode();
+		printf("AddLeaf SPLIT   splitid: %d\n", split->id);
 		split->Ti = p->b->Ti;
 		split->head = p->b->head;
 		split->sdep = p->s + p->b->head;
