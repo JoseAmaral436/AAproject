@@ -615,7 +615,6 @@ int main() {
 		scanf("%d", &ni[i]);
 		Ti[i] = (char*) malloc(sizeof(char) * (ni[i] + 1));
 		scanf("%s", Ti[i]);
-		Ti[i][ni[i]] = '-';
 	}
 	root = buildST(numOfLines);
 
