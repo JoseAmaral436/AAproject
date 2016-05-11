@@ -295,7 +295,7 @@ int main() {
 		printf("No number\n");
 	}
 	int i;
-	char *line = malloc(sizeof(char) * 6);;
+	char *line = malloc(sizeof(char) * 7);;
 	Info * find = malloc(sizeof(Info));
 	for (i = 1; i <= numOfLines; i++) {
 		Node *result = NULL;
