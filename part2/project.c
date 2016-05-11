@@ -609,7 +609,6 @@ int main() {
 	}
 	suffixesIdx = (int*) malloc(sizeof(int) * numOfLines);
 	int i;
-	char *line = NULL;
 	Ti = (char**) malloc(sizeof(char*) * numOfLines);
 	ni = (int *) malloc(sizeof(int) * numOfLines);
 	for (i = 0; i < numOfLines; i++) {
@@ -621,9 +620,8 @@ int main() {
 	root = buildST(numOfLines);
 
 	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
-	for (i = 0; i < numOfLines - 1; i++) {
-		result[i] = 0;
-	}
+	memset(result, 0, numOfLines-1);
+
 	DFS(root);
 
 	printST(root);
@@ -640,7 +638,6 @@ int main() {
 	}
 	printf("\n");
 	clean(root);
-	free(line);
 	for (i = 0; i < numOfLines; i++) {
 		free(Ti[i]);
 	}
