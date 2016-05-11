@@ -35,7 +35,7 @@ int id = 0;
 Node *root = NULL;
 Node *previouslyNode = NULL;
 Node *previouslySplit = NULL;
-int *result;
+int *result = NULL;
 
 Node* initNode() {
 	Node* node = malloc(sizeof(Node));
@@ -312,14 +312,14 @@ void SuffixLink(Point *p) {
 		/*printf("||||||||||||||||index: %d|||||||||||||||||||\n", index);*/
 		DescendQ(p, Ti[phead->Ti][index]);
 		
-		/*if (head < p->b->sdep - p->b->head){
-			printf("BREAK\n");
+		if (head < p->b->sdep - p->b->head){
+			/*printf("BREAK\n");*/
 			break;
-		}*/
-		/*p->s = p->b->sdep - p->b->head;
-		index = index + p->b->sdep - p->a->sdep;*/
-		p->s++;
-		index++;
+		}
+		p->s = p->s + (p->b->sdep - p->b->head) - (p->a->sdep - p->a->head);
+		index = index + (p->b->sdep - p->b->head) - (p->a->sdep - p->a->head);
+		/*p->s++;
+		index++;*/
 		if ((p->b->head + p->s) == (p->b)->sdep) {
 			p->a = p->b;
 		}
@@ -526,8 +526,13 @@ int main() {
 	if (numOfLines == 0) {
 		printf("No number\n");
 	}
-	suffixesIdx = (int*) malloc(sizeof(int) * numOfLines);
 	int i;
+	suffixesIdx = (int*) malloc(sizeof(int) * numOfLines);
+	for (i = 0; i < numOfLines; i++) {
+		suffixesIdx[i] = 0;
+	}
+	
+	
 	Ti = (char**) malloc(sizeof(char*) * numOfLines);
 	ni = (int *) malloc(sizeof(int) * numOfLines);
 	for (i = 0; i < numOfLines; i++) {
@@ -539,7 +544,7 @@ int main() {
 
 	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
 	
-	for (i = 0; i < numOfLines - 2; i++) {
+	for (i = 0; i < numOfLines - 1; i++) {
 		result[i] = 0;
 	}
 	
