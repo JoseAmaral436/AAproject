@@ -369,54 +369,72 @@ void DFS(Node* root) {
 	}
 }
 
-int main() {
-	int numOfLines;
-	scanf("%d\n", &numOfLines);
-	if (numOfLines == 0) {
-		printf("No number\n");
-	}
-	int i;
-	suffixesIdx = (int*) malloc(sizeof(int) * numOfLines);
-	for (i = 0; i < numOfLines; i++) {
-		suffixesIdx[i] = 0;
-	}
-
-
-	Ti = (char**) malloc(sizeof(char*) * numOfLines);
-	ni = (int *) malloc(sizeof(int) * numOfLines);
-	for (i = 0; i < numOfLines; i++) {
-		scanf("%d", &ni[i]);
-		Ti[i] = (char*) malloc(sizeof(char) * (ni[i] + 1));
-		scanf("%s", Ti[i]);
-	}
-
-	result = (int*) malloc(sizeof(int) * (numOfLines - 1));
-	for (i = 0; i < numOfLines - 1; i++) {
-		result[i] = 0;
-	}
-
-	root = buildST(numOfLines);
-	DFS(root);
-
-	/*fix if inconsistencia aula 29/03*/
-	for (i = numOfLines-2; i > 0 ; i--) {
-		if (result[i] > result[i-1]){
-			result[i-1] = result[i];
+void rand_string(char *str, size_t size) {
+	const char charset[] = "ACGT";
+	if (size) {
+		--size;
+		for (size_t n = 0; n < size; n++) {
+			int key = rand() % (int) (sizeof charset - 1);
+			str[n] = charset[key];
 		}
 	}
-	/*print final result*/
-	for (i = 0; i < numOfLines - 1; i++) {
-		printf("%d ", result[i]);
-	}
-	printf("\n");
+}
+int main(int argc, char** argv) {
+	int seed;
+	FILE *f = fopen("/dev/urandom", "r");
+	fread(&seed, sizeof(seed), 1, f);
+	fclose(f);
+	srand(seed);
 
-	clean(root);
-	for (i = 0; i < numOfLines; i++) {
-		free(Ti[i]);
+	int avg;
+	int MAX[16] = { 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 1000, 2500, 5000, 7500, 10000, 20000 };
+	/* 				0	1	2	3	4	5   6	 7	  8		9	 10	*/
+	int ITERATIONS = 1;
+	float TOTAL_TIME_UKKONEN = 0;
+	float TOTAL_TIME = 0;
+	for (avg = 0; avg < ITERATIONS; avg++) {
+
+		int numOfLines = 5;
+		int i;
+		suffixesIdx = (int*) malloc(sizeof(int) * numOfLines);
+		for (i = 0; i < numOfLines; i++) {
+			suffixesIdx[i] = 0;
+		}
+
+		Ti = (char**) malloc(sizeof(char*) * numOfLines);
+		ni = (int *) malloc(sizeof(int) * numOfLines);
+		for (i = 0; i < numOfLines; i++) {
+			ni[i] = MAX[atoi(argv[1])];/*rand() % (100 + 1 - 0) + 1;*/
+			Ti[i] = (char*) malloc(sizeof(char) * (ni[i] + 1));
+			rand_string(Ti[i], ni[i] + 1);
+		}
+		result = (int*) malloc(sizeof(int) * (numOfLines - 1));
+		for (i = 0; i < numOfLines - 1; i++) {
+			result[i] = 0;
+		}
+
+		clock_t start = clock();
+		root = buildST(numOfLines);
+		clock_t end = clock();
+		double time = (double) (end - start) / CLOCKS_PER_SEC; /*[s]*/
+		TOTAL_TIME_UKKONEN += (time);
+
+		DFS(root);
+		end = clock();
+		time = (double) (end - start) / CLOCKS_PER_SEC; /*[s]*/
+		TOTAL_TIME += time;
+
+		clean(root);
+		for (i = 0; i < numOfLines; i++) {
+			free(Ti[i]);
+		}
+		free(Ti);
+		free(ni);
+		free(suffixesIdx);
+		free(result);
 	}
-	free(Ti);
-	free(ni);
-	free(suffixesIdx);
-	free(result);
+	printf("ITERATIONS: %d MAX_SIZE: %d\n", ITERATIONS, MAX[atoi(argv[1])]);
+	printf("TOTAL_TIME_UKKONEN[ms]: %f\n", (TOTAL_TIME_UKKONEN * 1000) / ITERATIONS);
+	printf("TOTAL_TIME[ms]: %f\n", (TOTAL_TIME * 1000) / ITERATIONS);
 	return 0;
 }
